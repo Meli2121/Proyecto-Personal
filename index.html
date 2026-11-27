@@ -797,9 +797,17 @@
         <button type="button" class="tab-item" role="tab" id="tabFacturas" aria-selected="false" aria-controls="secFacturas">
           Generar Factura
         </button>
-        <button id="btnExportarReporte" type="button" style="padding: 8px 14px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; cursor: pointer; font-weight: 600;">
-  Descargar reporte (CSV)
-</button>
+       <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+  <select id="selectCategoriaReporte" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #cbd5e1; background: #ffffff; color: #0f172a; font-weight: 500;">
+    <option value="Materiales">Materiales</option>
+    <option value="Gastos">Gastos</option>
+    <option value="Salarios">Salarios</option>
+    <option value="Depósitos">Depósitos</option>
+  </select>
+  <button id="btnExportarReporte" type="button" style="padding: 8px 14px; border-radius: 8px; border: 1px solid #0f172a; background: #0f172a; color: #ffffff; cursor: pointer; font-weight: 600;">
+    Descargar reporte (CSV)
+  </button>
+</div>
       </nav>
 
       <!-- ====================================================================
@@ -2278,6 +2286,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
      
     })();
+    
   </script>
 </body>
 </html>
