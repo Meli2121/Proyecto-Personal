@@ -3,113 +3,367 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Financial · CR — Gestión Financiera y Proformas</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>Financial · CR — Sistema de Gestión Financiera Empresarial</title>
+  <!-- Bibliotecas externas CDN para gráficas, lectura de Excel (.xlsx / .xls) y exportación directa a PDF -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
+    /* ==========================================================================
+       PALETA DE COLORES: Blanco, gris profundo y gris claro (Modo Claro y Oscuro)
+       ========================================================================== */
     :root {
-      --bg: #f1f5f9;
-      --surface: #ffffff;
-      --surface-alt: #f8fafc;
-      --text: #0f172a;
-      --text-muted: #475569;
-      --border: #cbd5e1;
-      --primary: #0f766e;
-      --primary-hover: #115e59;
-      --secondary: #334155;
-      --danger: #dc2626;
-      --success-bg: #dcfce7;
-      --success-text: #166534;
-      --err-bg: #fee2e2;
-      --err-text: #991b1b;
-      --shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
-      --radius: 12px;
+      --bg-page: #f4f5f7;
+      --bg-surface: #ffffff;
+      --bg-subtle: #eaecf0;
+      --bg-hover: #dfe3e8;
+      --text-main: #1b1e23;
+      --text-secondary: #474e59;
+      --text-muted: #616977;
+      --border-light: #d0d5dd;
+      --border-strong: #8e96a4;
+      --deep-gray: #23272f;
+      --deep-gray-text: #ffffff;
+      --focus-outline: #1b1e23;
+      --error-bg: #fdf2f2;
+      --error-border: #9b1c1c;
+      --error-text: #7f1d1d;
+      --ok-bg: #f1f7f3;
+      --ok-border: #1e4620;
+      --ok-text: #143616;
+      --shadow-card: 0 2px 8px rgba(27, 30, 35, 0.07);
+      --radius-sm: 6px;
+      --radius-md: 10px;
     }
 
     [data-theme="dark"] {
-      --bg: #0f172a;
-      --surface: #1e293b;
-      --surface-alt: #0f172a;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --border: #334155;
-      --primary: #14b8a6;
-      --primary-hover: #0d9488;
-      --secondary: #475569;
-      --danger: #ef4444;
-      --success-bg: #064e3b;
-      --success-text: #a7f3d0;
-      --err-bg: #7f1d1d;
-      --err-text: #fecaca;
-      --shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      --bg-page: #131518;
+      --bg-surface: #1c1f24;
+      --bg-subtle: #262a31;
+      --bg-hover: #30353e;
+      --text-main: #f5f6f8;
+      --text-secondary: #cbd0d8;
+      --text-muted: #9ba3b0;
+      --border-light: #373d47;
+      --border-strong: #616a79;
+      --deep-gray: #e6e9ef;
+      --deep-gray-text: #131518;
+      --focus-outline: #f5f6f8;
+      --error-bg: #2c1618;
+      --error-border: #f87171;
+      --error-text: #fecaca;
+      --ok-bg: #15271b;
+      --ok-border: #6ee7b7;
+      --ok-text: #d1fae5;
+      --shadow-card: 0 2px 10px rgba(0, 0, 0, 0.45);
     }
 
-    * {
+    *, *::before, *::after {
       box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    html {
+      font-size: 16px;
+      scroll-behavior: smooth;
     }
 
     body {
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.5;
-      transition: background 0.2s, color 0.2s;
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      font-size: 1rem;
+      line-height: 1.55;
+      background-color: var(--bg-page);
+      color: var(--text-main);
+      transition: background-color 0.2s ease, color 0.2s ease;
     }
 
-    /* Barra superior */
-    .navbar {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
+    :focus-visible {
+      outline: 3px solid var(--focus-outline);
+      outline-offset: 2px;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .skip-link {
+      position: absolute;
+      top: -52px;
+      left: 16px;
+      background-color: var(--deep-gray);
+      color: var(--deep-gray-text);
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      text-decoration: none;
+      z-index: 1000;
+    }
+
+    .skip-link:focus {
+      top: 14px;
+    }
+
+    /* Cabecera institucional */
+    .topbar {
+      background-color: var(--bg-surface);
+      border-bottom: 1px solid var(--border-light);
       padding: 14px 24px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      flex-wrap: wrap;
       position: sticky;
       top: 0;
-      z-index: 20;
-      box-shadow: var(--shadow);
+      z-index: 40;
+      box-shadow: var(--shadow-card);
+    }
+
+    .topbar-inner {
+      max-width: 1240px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
     }
 
     .brand {
-      font-weight: 800;
-      font-size: 1.2rem;
-      color: var(--primary);
-      letter-spacing: -0.02em;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
     }
 
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius-sm);
+      background-color: var(--deep-gray);
+      color: var(--deep-gray-text);
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 1.05rem;
+    }
+
+    .brand-name {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 700;
+    }
+
+    .brand-caption {
+      margin: 0;
+      font-size: 1rem;
+      color: var(--text-muted);
+    }
+
+    .topbar-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Botones */
+    button {
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-strong);
+      background-color: var(--bg-surface);
+      color: var(--text-main);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: background-color 0.15s ease;
+    }
+
+    button:hover:not(:disabled) {
+      background-color: var(--bg-hover);
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background-color: var(--deep-gray);
+      color: var(--deep-gray-text);
+      border-color: var(--deep-gray);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      opacity: 0.9;
+      background-color: var(--deep-gray);
+    }
+
+    .btn-danger {
+      background-color: var(--error-bg);
+      color: var(--error-text);
+      border-color: var(--error-border);
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 1rem;
+    }
+
+    /* Contenedor principal */
+    .wrapper {
+      max-width: 1240px;
+      margin: 26px auto;
+      padding: 0 20px 60px;
+    }
+
+    .panel-card {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      box-shadow: var(--shadow-card);
+      margin-bottom: 24px;
+    }
+
+    .panel-title {
+      margin: 0 0 6px;
+      font-size: 1.35rem;
+      font-weight: 700;
+    }
+
+    .panel-desc {
+      margin: 0 0 20px;
+      font-size: 1rem;
+      color: var(--text-secondary);
+    }
+
+    /* Alertas y mensajes de confirmación */
+    .feedback-box {
+      padding: 14px 16px;
+      border-radius: var(--radius-sm);
+      margin-bottom: 18px;
+      font-weight: 600;
+      border: 1px solid transparent;
+      display: none;
+    }
+
+    .feedback-box.visible {
+      display: block;
+    }
+
+    .feedback-box.ok {
+      background-color: var(--ok-bg);
+      color: var(--ok-text);
+      border-color: var(--ok-border);
+    }
+
+    .feedback-box.err {
+      background-color: var(--error-bg);
+      color: var(--error-text);
+      border-color: var(--error-border);
+    }
+
+    /* Formularios */
+    .grid-form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+      align-items: start;
+    }
+
+    .field-block {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .field-block.span-all {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 1rem;
+      color: var(--text-main);
+    }
+
+    input[type="email"],
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    input[type="password"],
+    input[type="file"],
+    select,
+    textarea {
+      font-family: inherit;
+      font-size: 1rem;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-strong);
+      background-color: var(--bg-surface);
+      color: var(--text-main);
+      width: 100%;
+    }
+
+    textarea {
+      min-height: 76px;
+      resize: vertical;
+    }
+
+    .error-msg {
+      display: none;
+      font-size: 1rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+      background-color: var(--error-bg);
+      color: var(--error-text);
+      border-left: 3px solid var(--error-border);
+    }
+
+    .error-msg.visible {
+      display: block;
+    }
+
+    /* Pantalla única de inicio de sesión */
+    .login-center {
+      max-width: 460px;
+      margin: 48px auto;
+    }
+
+    /* Pestañas de navegación */
     .nav-tabs {
       display: flex;
+      flex-wrap: wrap;
+      align-items: center;
       gap: 8px;
-      background: var(--surface-alt);
-      padding: 4px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
+      border-bottom: 2px solid var(--border-light);
+      padding-bottom: 12px;
+      margin-bottom: 24px;
     }
 
-    .tab-btn {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      padding: 7px 14px;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: all 0.15s;
+    .tab-item {
+      background-color: var(--bg-subtle);
+      border: 1px solid var(--border-light);
+      color: var(--text-secondary);
     }
 
-    .tab-btn.active {
-      background: var(--primary);
-      color: #ffffff;
+    .tab-item[aria-selected="true"] {
+      background-color: var(--deep-gray);
+      color: var(--deep-gray-text);
+      border-color: var(--deep-gray);
     }
 
-    .report-controls {
+    .report-export-bar {
       display: flex;
       gap: 8px;
       align-items: center;
@@ -117,854 +371,1597 @@
       margin-left: auto;
     }
 
-    /* Controles de formulario */
-    input, select, textarea {
-      background: var(--surface);
-      color: var(--text);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 8px 12px;
-      font-size: 0.9rem;
-      outline: none;
-      transition: border-color 0.15s;
+    .report-export-bar select {
+      width: auto;
+      min-width: 150px;
     }
 
-    input:focus, select:focus, textarea:focus {
-      border-color: var(--primary);
-    }
-
-    button {
-      cursor: pointer;
-      border: none;
-      border-radius: 8px;
-      padding: 9px 15px;
-      font-weight: 600;
-      font-size: 0.9rem;
-      transition: opacity 0.15s, background 0.15s;
-    }
-
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    .btn-primary {
-      background: var(--primary);
-      color: #ffffff;
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      background: var(--primary-hover);
-    }
-
-    .btn-secondary {
-      background: var(--surface-alt);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-
-    .btn-secondary:hover:not(:disabled) {
-      border-color: var(--primary);
-    }
-
-    .btn-danger {
-      background: transparent;
-      color: var(--danger);
-      border: 1px solid var(--danger);
-      padding: 5px 10px;
-      font-size: 0.8rem;
-    }
-
-    .btn-danger:hover {
-      background: var(--danger);
-      color: #ffffff;
-    }
-
-    /* Layout principal */
-    .container {
-      max-width: 1220px;
-      margin: 24px auto;
-      padding: 0 20px;
-    }
-
-    .alert {
-      display: none;
-      padding: 12px 16px;
-      border-radius: 8px;
-      margin-bottom: 16px;
-      font-weight: 500;
-      font-size: 0.92rem;
-    }
-
-    .alert.show { display: block; }
-    .alert.ok { background: var(--success-bg); color: var(--success-text); }
-    .alert.err { background: var(--err-bg); color: var(--err-text); }
-
-    .view-section { display: none; }
-    .view-section.active { display: block; }
-
-    /* Tarjetas KPI */
+    /* Tarjetas de resumen del periodo */
     .kpi-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
       gap: 16px;
       margin-bottom: 24px;
     }
 
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      box-shadow: var(--shadow);
+    .kpi-box {
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      box-shadow: var(--shadow-card);
     }
 
-    .kpi-label {
-      font-size: 0.85rem;
-      color: var(--text-muted);
+    .kpi-box.primary-kpi {
+      background-color: var(--deep-gray);
+      color: var(--deep-gray-text);
+      border-color: var(--deep-gray);
+    }
+
+    .kpi-title {
+      margin: 0 0 6px;
+      font-size: 1rem;
       font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
+      color: var(--text-secondary);
     }
 
-    .kpi-value {
-      font-size: 1.55rem;
+    .kpi-box.primary-kpi .kpi-title {
+      color: var(--deep-gray-text);
+      opacity: 0.9;
+    }
+
+    .kpi-amount {
+      margin: 0;
+      font-size: 1.4rem;
       font-weight: 800;
-      margin-top: 6px;
+      word-break: break-word;
     }
 
-    .grid-2 {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-      gap: 20px;
-      margin-bottom: 24px;
-    }
-
-    .card h2, .card h3 {
-      font-size: 1.08rem;
-      margin-bottom: 14px;
-      color: var(--text);
-    }
-
-    .form-group {
-      margin-bottom: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-
-    .form-group label {
-      font-size: 0.85rem;
-      font-weight: 600;
+    .kpi-note {
+      margin: 6px 0 0;
+      font-size: 1rem;
       color: var(--text-muted);
     }
 
-    .form-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 12px;
+    .kpi-box.primary-kpi .kpi-note {
+      color: var(--deep-gray-text);
+      opacity: 0.85;
     }
 
-    /* Tablas */
-    .table-wrap {
+    /* Tabla de registros */
+    .list-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .table-scroll {
+      width: 100%;
       overflow-x: auto;
-      margin-top: 12px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.9rem;
+      text-align: left;
+      background-color: var(--bg-surface);
     }
 
     th, td {
-      text-align: left;
-      padding: 11px 12px;
-      border-bottom: 1px solid var(--border);
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 1rem;
+      vertical-align: top;
     }
 
     th {
-      background: var(--surface-alt);
-      color: var(--text-muted);
+      background-color: var(--bg-subtle);
       font-weight: 700;
-      font-size: 0.8rem;
-      text-transform: uppercase;
     }
 
-    .badge {
+    tbody tr:hover {
+      background-color: var(--bg-hover);
+    }
+
+    .cat-pill {
       display: inline-block;
-      padding: 3px 9px;
+      padding: 4px 10px;
       border-radius: 999px;
-      font-size: 0.78rem;
+      font-size: 1rem;
       font-weight: 700;
-      background: var(--surface-alt);
-      border: 1px solid var(--border);
+      background-color: var(--bg-subtle);
+      border: 1px solid var(--border-strong);
+      color: var(--text-main);
     }
 
-    /* Módulo de Proformas */
-    .proforma-layout {
+    .row-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .empty-box {
+      text-align: center;
+      padding: 38px 20px;
+      background-color: var(--bg-subtle);
+      border: 1px dashed var(--border-strong);
+      border-radius: var(--radius-md);
+    }
+
+    /* Gráficas */
+    .charts-wrapper {
       display: grid;
-      grid-template-columns: 1.15fr 0.85fr;
-      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      gap: 24px;
+    }
+
+    .chart-card {
+      background-color: var(--bg-subtle);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 18px;
+    }
+
+    .canvas-container {
+      position: relative;
+      width: 100%;
+      height: 290px;
+    }
+
+    .summary-list {
+      list-style: none;
+      padding: 0;
+      margin: 16px 0 0;
+      display: grid;
+      gap: 8px;
+    }
+
+    .summary-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background-color: var(--bg-surface);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      font-size: 1rem;
+    }
+
+    /* Factura y Proforma La Cantera CR */
+    .invoice-split {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+      gap: 24px;
       align-items: start;
     }
 
-    @media (max-width: 960px) {
-      .proforma-layout {
+    .invoice-paper {
+      background-color: #ffffff;
+      color: #111111;
+      border: 1px solid #8e96a4;
+      border-radius: var(--radius-sm);
+      padding: 26px;
+      box-shadow: var(--shadow-card);
+    }
+
+    .invoice-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      border-bottom: 2px solid #1b1e23;
+      padding-bottom: 14px;
+      margin-bottom: 16px;
+    }
+
+    .cantera-badge {
+      background-color: #111111;
+      color: #ffffff;
+      padding: 12px 16px;
+      border-radius: 4px;
+      text-align: center;
+    }
+
+    .cantera-badge strong {
+      display: block;
+      font-size: 1.25rem;
+    }
+
+    .cantera-badge span {
+      display: block;
+      font-size: 1rem;
+    }
+
+    .invoice-paper p {
+      margin: 4px 0;
+      font-size: 1rem;
+    }
+
+    .invoice-items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+    }
+
+    .invoice-items-table th {
+      background-color: #1b1e23;
+      color: #ffffff;
+      padding: 10px 12px;
+      border: 1px solid #1b1e23;
+    }
+
+    .invoice-items-table td {
+      background-color: #ffffff;
+      color: #111111;
+      padding: 12px;
+      border: 1px solid #cccccc;
+    }
+
+    .invoice-totals-box {
+      margin-left: auto;
+      max-width: 310px;
+      background-color: #f4f5f7;
+      border: 1px solid #1b1e23;
+      padding: 12px;
+    }
+
+    .proforma-validity-note {
+      margin-top: 12px;
+      padding: 8px 12px;
+      background-color: #f4f5f7;
+      border-left: 3px solid #1b1e23;
+      font-size: 0.95rem;
+      color: #1b1e23;
+    }
+
+    .invoice-payment-box {
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid #cccccc;
+      display: flex;
+      justify-content: flex-start;
+      align-items: flex-start;
+    }
+
+    .invoice-payment-img {
+      width: 100%;
+      max-width: 240px;
+      height: auto;
+      display: block;
+      margin: 0;
+      border-radius: 4px;
+      border: 1px solid #1b1e23;
+    }
+
+    .invoice-line-card {
+      background-color: var(--bg-subtle);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .invoice-line-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      gap: 8px;
+    }
+
+    .invoice-line-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 10px;
+      align-items: start;
+    }
+
+    @media (max-width: 540px) {
+      .invoice-line-grid {
         grid-template-columns: 1fr;
       }
     }
 
-    .item-row {
-      display: grid;
-      grid-template-columns: 2.2fr 0.7fr 1fr auto;
-      gap: 8px;
-      align-items: center;
-      margin-bottom: 8px;
+    /* Diálogo modal accesible */
+    dialog {
+      background-color: var(--bg-surface);
+      color: var(--text-main);
+      border: 1px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      max-width: 460px;
+      width: 92%;
+      box-shadow: var(--shadow-card);
     }
 
-    /* Hoja imprimible de Proforma */
-    .proforma-sheet {
-      background: #ffffff;
-      color: #0f172a;
-      border: 1px solid #cbd5e1;
-      border-radius: 10px;
-      padding: 28px;
-      box-shadow: var(--shadow);
+    dialog::backdrop {
+      background-color: rgba(19, 21, 24, 0.65);
     }
 
-    .proforma-sheet-header {
+    .dialog-footer {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      border-bottom: 2px solid #0f766e;
-      padding-bottom: 14px;
-      margin-bottom: 18px;
+      justify-content: flex-end;
       gap: 12px;
+      margin-top: 20px;
     }
 
-    .proforma-sheet table th {
-      background: #f1f5f9;
-      color: #334155;
-    }
-
-    .proforma-sheet table td,
-    .proforma-sheet table th {
-      border-bottom: 1px solid #e2e8f0;
-      color: #0f172a;
-    }
-
-    .proforma-totals {
-      margin-top: 16px;
-      margin-left: auto;
-      max-width: 270px;
+    /* Nota discreta de identificación */
+    .footer-note {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 18px 20px;
+      border-top: 1px solid var(--border-light);
       display: flex;
-      flex-direction: column;
-      gap: 6px;
-      font-size: 0.92rem;
-    }
-
-    .proforma-totals div {
-      display: flex;
+      flex-wrap: wrap;
       justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      color: var(--text-muted);
+      font-size: 1rem;
     }
 
-    .proforma-total-final {
-      border-top: 2px solid #0f172a;
-      padding-top: 6px;
-      font-weight: 800;
-      font-size: 1.05rem;
-      color: #0f766e;
+    .hidden {
+      display: none !important;
     }
 
-    /* Estilos de impresión para PDF de Proforma */
     @media print {
       body * {
         visibility: hidden;
       }
-      #proformaPrintArea, #proformaPrintArea * {
+      #invoicePreviewSheet, #invoicePreviewSheet * {
         visibility: visible;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
       }
-      #proformaPrintArea {
+      #invoicePreviewSheet {
         position: absolute;
         left: 0;
         top: 0;
         width: 100%;
-        box-shadow: none;
         border: none;
-        padding: 0;
+        box-shadow: none;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .topbar {
+        padding: 12px 16px;
+      }
+      .panel-card {
+        padding: 16px;
+      }
+      .invoice-header {
+        flex-direction: column;
+      }
+      .report-export-bar {
+        margin-left: 0;
+        width: 100%;
       }
     }
   </style>
 </head>
 <body>
+  <a href="#contenidoPrincipal" class="skip-link">Saltar al contenido principal</a>
 
-  <!-- Barra de Navegación y Descarga de Reportes -->
-  <header class="navbar">
-    <div class="brand">Financial · CR</div>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">F·CR</div>
+        <div>
+          <h1 class="brand-name">Financial · CR</h1>
+          <p class="brand-caption">Control financiero empresarial en colones (CRC)</p>
+        </div>
+      </div>
 
-    <nav class="nav-tabs" aria-label="Secciones principales">
-      <button type="button" class="tab-btn active" data-tab="movimientosView">Movimientos y Excel</button>
-      <button type="button" class="tab-btn" data-tab="proformasView">Proformas</button>
-    </nav>
-
-    <div class="report-controls">
-      <select id="selectCategoriaReporte" aria-label="Categoría para exportar reporte" style="width: auto;">
-        <option value="Todas">Todas las categorías</option>
-        <option value="Materiales">Materiales</option>
-        <option value="Gastos">Gastos</option>
-        <option value="Salarios">Salarios</option>
-        <option value="Depósitos">Depósitos</option>
-      </select>
-      <input type="date" id="reporteDesde" title="Fecha inicio (opcional)" aria-label="Reporte desde" />
-      <input type="date" id="reporteHasta" title="Fecha fin (opcional)" aria-label="Reporte hasta" />
-      <button id="btnExportarReporte" type="button" class="btn-primary">
-        Descargar reporte (CSV)
-      </button>
-      <button id="themeToggleBtn" type="button" class="btn-secondary" title="Cambiar tema">
-        🌓 Tema
-      </button>
+      <div class="topbar-controls">
+        <span id="activeAdminTag" class="cat-pill hidden" aria-live="polite"></span>
+        <button type="button" id="toggleThemeBtn" aria-pressed="false">
+          <span id="themeSymbol" aria-hidden="true">☾</span>
+          <span id="themeText">Modo oscuro</span>
+        </button>
+        <button type="button" id="logoutBtn" class="hidden">Cerrar sesión</button>
+      </div>
     </div>
   </header>
 
-  <main class="container">
-    <div id="globalAlert" class="alert" role="status"></div>
+  <main id="contenidoPrincipal" class="wrapper">
+    <div id="globalAlert" class="feedback-box" role="status" aria-live="polite"></div>
 
-    <!-- VISTA 1: MOVIMIENTOS Y EXCEL -->
-    <section id="movimientosView" class="view-section active">
-      <div class="kpi-grid">
-        <div class="card">
-          <div class="kpi-label">Depósitos (Ingresos)</div>
-          <div class="kpi-value" id="kpiDepositos" style="color: #10b981;">₡0.00</div>
-        </div>
-        <div class="card">
-          <div class="kpi-label">Materiales + Gastos + Salarios</div>
-          <div class="kpi-value" id="kpiEgresos" style="color: #ef4444;">₡0.00</div>
-        </div>
-        <div class="card">
-          <div class="kpi-label">Balance Neto</div>
-          <div class="kpi-value" id="kpiBalance">₡0.00</div>
-        </div>
-        <div class="card">
-          <div class="kpi-label">Total Registros</div>
-          <div class="kpi-value" id="kpiCantidad">0</div>
-        </div>
-      </div>
+    <!-- ======================================================================
+         PANTALLA ÚNICA DE INICIO DE SESIÓN (EXCLUSIVO ADMINISTRACIÓN)
+         ====================================================================== -->
+    <section id="authView" aria-labelledby="tituloAcceso">
+      <div class="login-center">
+        <article class="panel-card">
+          <h2 id="tituloAcceso" class="panel-title">Iniciar sesión</h2>
+          <p class="panel-desc">
+            Acceso exclusivo para el usuario <strong>Administración</strong>.
+          </p>
 
-      <div class="grid-2">
-        <!-- Registro Manual -->
-        <div class="card">
-          <h2>Registrar movimiento</h2>
-          <form id="manualForm">
-            <div class="form-row">
-              <div class="form-group">
-                <label for="movAmount">Monto (₡ CRC)</label>
-                <input type="number" id="movAmount" step="0.01" min="0.01" placeholder="Ej. 150000" required />
+          <form id="loginForm" novalidate>
+            <div class="field-block">
+              <label for="loginEmail">Correo electrónico</label>
+              <input type="email" id="loginEmail" name="loginEmail" autocomplete="email" placeholder="correo@empresa.com" required />
+              <span id="loginEmailErr" class="error-msg" role="alert"></span>
+            </div>
+
+            <div class="field-block" style="margin-top: 14px;">
+              <label for="loginPassword">Contraseña</label>
+              <div style="display: flex; gap: 8px;">
+                <input type="password" id="loginPassword" name="loginPassword" autocomplete="current-password" required />
+                <button type="button" id="togglePwdBtn" class="btn-sm" aria-label="Mostrar contraseña">Ver</button>
               </div>
-              <div class="form-group">
-                <label for="movCategory">Categoría</label>
-                <select id="movCategory" required>
-                  <option value="Materiales">Materiales</option>
+              <span id="loginPasswordErr" class="error-msg" role="alert"></span>
+            </div>
+
+            <div style="margin-top: 20px;">
+              <button type="submit" id="loginSubmitBtn" class="btn-primary" style="width: 100%;">Entrar al sistema</button>
+            </div>
+          </form>
+        </article>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         ÁREA DE TRABAJO PRINCIPAL (PROTEGIDA POR CONTRASEÑA)
+         ====================================================================== -->
+    <div id="workspaceView" class="hidden">
+      <nav class="nav-tabs" role="tablist" aria-label="Secciones de Financial CR">
+        <button type="button" class="tab-item" role="tab" id="tabMovimientos" aria-selected="true" aria-controls="secMovimientos">
+          Movimientos y Resumen
+        </button>
+        <button type="button" class="tab-item" role="tab" id="tabGraficas" aria-selected="false" aria-controls="secGraficas">
+          Gráficas Resumen
+        </button>
+        <button type="button" class="tab-item" role="tab" id="tabExcel" aria-selected="false" aria-controls="secExcel">
+          Cargar Hoja de Excel
+        </button>
+        <button type="button" class="tab-item" role="tab" id="tabFacturas" aria-selected="false" aria-controls="secFacturas">
+          Generar Factura
+        </button>
+        <button type="button" class="tab-item" role="tab" id="tabProformas" aria-selected="false" aria-controls="secFacturas">
+          Generar Proforma
+        </button>
+
+        <div class="report-export-bar">
+          <select id="selectCategoriaReporte" aria-label="Categoría para exportar reporte">
+            <option value="Materiales">Materiales</option>
+            <option value="Gastos">Gastos</option>
+            <option value="Salarios">Salarios</option>
+            <option value="Depósitos">Depósitos</option>
+          </select>
+          <button id="btnExportarReporte" type="button" class="btn-primary">
+            Descargar reporte (CSV)
+          </button>
+        </div>
+      </nav>
+
+      <!-- ====================================================================
+           SECCIÓN 1: MOVIMIENTOS, TOTALES Y LISTADO
+           ==================================================================== -->
+      <section id="secMovimientos" role="tabpanel" aria-labelledby="tabMovimientos">
+        <div class="kpi-grid" aria-label="Totales financieros en colones">
+          <article class="kpi-box primary-kpi">
+            <h2 class="kpi-title">Total del periodo (Balance neto)</h2>
+            <p class="kpi-amount" id="kpiTotalPeriodo">₡0,00</p>
+            <p class="kpi-note" id="kpiCantidadRegistros">0 movimientos guardados</p>
+          </article>
+          <article class="kpi-box">
+            <h2 class="kpi-title">Depósitos</h2>
+            <p class="kpi-amount" id="kpiDepositos">₡0,00</p>
+            <p class="kpi-note">Ingresos y abonos</p>
+          </article>
+          <article class="kpi-box">
+            <h2 class="kpi-title">Gastos</h2>
+            <p class="kpi-amount" id="kpiGastos">₡0,00</p>
+            <p class="kpi-note">Gastos operativos</p>
+          </article>
+          <article class="kpi-box">
+            <h2 class="kpi-title">Materiales</h2>
+            <p class="kpi-amount" id="kpiMateriales">₡0,00</p>
+            <p class="kpi-note">Láminas e insumos</p>
+          </article>
+          <article class="kpi-box">
+            <h2 class="kpi-title">Salarios</h2>
+            <p class="kpi-amount" id="kpiSalarios">₡0,00</p>
+            <p class="kpi-note">Planilla y pagos</p>
+          </article>
+        </div>
+
+        <article class="panel-card">
+          <h2 class="panel-title" id="formMovementTitle">Registrar movimiento</h2>
+          <p class="panel-desc">
+            Ingrese un monto mayor que cero en colones costarricenses (CRC), seleccione la categoría y la fecha. La nota es opcional.
+          </p>
+
+          <div id="movementAlert" class="feedback-box" role="status" aria-live="polite"></div>
+
+          <form id="movementForm" novalidate>
+            <input type="hidden" id="editRecordId" value="" />
+            <div class="grid-form">
+              <div class="field-block">
+                <label for="movAmount">Monto (CRC) *</label>
+                <input type="number" id="movAmount" name="movAmount" step="0.01" min="0.01" placeholder="Ej. 125000" required />
+                <span id="movAmountErr" class="error-msg" role="alert"></span>
+              </div>
+
+              <div class="field-block">
+                <label for="movCategory">Categoría *</label>
+                <select id="movCategory" name="movCategory" required>
                   <option value="Gastos">Gastos</option>
                   <option value="Salarios">Salarios</option>
                   <option value="Depósitos">Depósitos</option>
+                  <option value="Materiales">Materiales</option>
+                </select>
+                <span id="movCategoryErr" class="error-msg" role="alert"></span>
+              </div>
+
+              <div class="field-block">
+                <label for="movDate">Fecha *</label>
+                <input type="date" id="movDate" name="movDate" required />
+                <span id="movDateErr" class="error-msg" role="alert"></span>
+              </div>
+
+              <div class="field-block">
+                <label for="movNote">Nota o descripción (opcional)</label>
+                <input type="text" id="movNote" name="movNote" placeholder="Ej. Compra de lámina de cuarzo o pago de planilla" />
+              </div>
+            </div>
+
+            <div style="margin-top: 18px; display: flex; flex-wrap: wrap; gap: 12px;">
+              <button type="submit" class="btn-primary" id="saveMovBtn">Guardar movimiento</button>
+              <button type="button" id="cancelEditBtn" class="hidden">Cancelar edición</button>
+            </div>
+          </form>
+        </article>
+
+        <article class="panel-card">
+          <div class="list-toolbar">
+            <div>
+              <h2 class="panel-title">Listado de movimientos</h2>
+              <p class="panel-desc" style="margin-bottom: 0;">
+                Todos los registros permanecen almacenados hasta que usted confirme su eliminación.
+              </p>
+            </div>
+
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end;">
+              <div class="field-block" style="min-width: 210px;">
+                <label for="categoryFilterSelect">Filtrar por categoría</label>
+                <select id="categoryFilterSelect">
+                  <option value="Todas">Todas las categorías</option>
+                  <option value="Gastos">Gastos</option>
+                  <option value="Salarios">Salarios</option>
+                  <option value="Depósitos">Depósitos</option>
+                  <option value="Materiales">Materiales</option>
                 </select>
               </div>
-            </div>
-            <div class="form-row">
-              <div class="form-group">
-                <label for="movDate">Fecha</label>
-                <input type="date" id="movDate" required />
-              </div>
-              <div class="form-group">
-                <label for="movNote">Detalle / Nota</label>
-                <input type="text" id="movNote" placeholder="Ej. Lámina de granito / Factura #12" required />
-              </div>
-            </div>
-            <button type="submit" class="btn-primary" style="margin-top: 6px; width: 100%;">
-              Guardar movimiento
-            </button>
-          </form>
-        </div>
-
-        <!-- Importar Excel y Datos de Ejemplo -->
-        <div class="card">
-          <h2>Importar desde Excel (.xlsx / .csv)</h2>
-          <div id="excelAlert" class="alert" role="status"></div>
-          <form id="excelUploadForm">
-            <div class="form-group">
-              <label for="excelFileInput">Seleccionar archivo de taller</label>
-              <input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" required />
-            </div>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
-              <button type="submit" class="btn-primary">Importar archivo</button>
-              <button type="button" id="loadTallerTemplateBtn" class="btn-secondary">
-                Cargar 4 ejemplos del taller
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <!-- Historial de Movimientos -->
-      <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
-          <h2 style="margin-bottom: 0;">Historial de movimientos</h2>
-          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <select id="filterCategory">
-              <option value="Todas">Todas las categorías</option>
-              <option value="Materiales">Materiales</option>
-              <option value="Gastos">Gastos</option>
-              <option value="Salarios">Salarios</option>
-              <option value="Depósitos">Depósitos</option>
-            </select>
-            <input type="search" id="searchMovements" placeholder="Buscar por nota o fecha..." />
-          </div>
-        </div>
-
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Fecha</th>
-                <th>Categoría</th>
-                <th>Detalle / Nota</th>
-                <th>Monto (₡)</th>
-                <th>Acción</th>
-              </tr>
-            </thead>
-            <tbody id="movementsTableBody">
-              <tr><td colspan="5">Cargando movimientos...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- VISTA 2: MÓDULO DE PROFORMAS -->
-    <section id="proformasView" class="view-section">
-      <div class="proforma-layout">
-        <!-- Formulario Constructor de Proforma -->
-        <div class="card">
-          <h2>Nueva Proforma / Cotización</h2>
-          <div class="form-row">
-            <div class="form-group">
-              <label for="profNumero">N.º Proforma</label>
-              <input type="text" id="profNumero" />
-            </div>
-            <div class="form-group">
-              <label for="profFecha">Fecha de emisión</label>
-              <input type="date" id="profFecha" />
-            </div>
-            <div class="form-group">
-              <label for="profValidez">Validez (días)</label>
-              <input type="number" id="profValidez" value="15" min="1" />
+              <button type="button" id="deleteAllBtn" class="btn-danger">Borrar todo</button>
             </div>
           </div>
 
-          <div class="form-row">
-            <div class="form-group">
-              <label for="profEmisor">Nombre del Taller / Empresa</label>
-              <input type="text" id="profEmisor" value="Taller de Granito y Cuarzo · CR" />
-            </div>
-            <div class="form-group">
-              <label for="profCliente">Cliente</label>
-              <input type="text" id="profCliente" placeholder="Nombre del cliente o empresa" />
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label for="profContacto">Teléfono / Correo del cliente</label>
-              <input type="text" id="profContacto" placeholder="Ej. 8888-8888 / cliente@correo.com" />
-            </div>
-            <div class="form-group">
-              <label for="profDescuento">Descuento (₡ CRC)</label>
-              <input type="number" id="profDescuento" value="0" min="0" step="0.01" />
-            </div>
-          </div>
-
-          <div style="margin: 12px 0; display: flex; align-items: center; gap: 8px;">
-            <input type="checkbox" id="profAplicarIVA" style="width: auto;" />
-            <label for="profAplicarIVA" style="font-size: 0.9rem; font-weight: 600; cursor: pointer;">
-              Aplicar IVA (13% Costa Rica)
-            </label>
-          </div>
-
-          <h3 style="margin-top: 14px;">Detalle de trabajos / materiales</h3>
-          <div id="proformaItemsContainer"></div>
-          <button type="button" id="addProformaItemBtn" class="btn-secondary" style="margin-top: 6px;">
-            + Agregar línea
-          </button>
-
-          <div class="form-group" style="margin-top: 14px;">
-            <label for="profNotas">Condiciones de pago y notas</label>
-            <textarea id="profNotas" rows="2">50% de adelanto para iniciar fabricación y 50% contra entrega e instalación.</textarea>
-          </div>
-
-          <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px;">
-            <button type="button" id="printProformaBtn" class="btn-primary">
-              Imprimir / Guardar PDF
-            </button>
-            <button type="button" id="saveProformaBtn" class="btn-secondary">
-              Guardar proforma
-            </button>
-            <button type="button" id="convertirDepositoBtn" class="btn-secondary">
-              Registrar adelanto (50%) en Depósitos
-            </button>
-          </div>
-        </div>
-
-        <!-- Vista Previa Imprimible + Historial -->
-        <div style="display: flex; flex-direction: column; gap: 20px;">
-          <div id="proformaPrintArea" class="proforma-sheet">
-            <div class="proforma-sheet-header">
-              <div>
-                <h2 id="prevEmisor" style="margin: 0; color: #0f766e; font-size: 1.25rem;">Taller de Granito y Cuarzo · CR</h2>
-                <p style="font-size: 0.85rem; color: #475569; margin-top: 4px;">Cotización formal de materiales y mano de obra</p>
-              </div>
-              <div style="text-align: right;">
-                <span style="background: #0f766e; color: #fff; padding: 4px 10px; border-radius: 6px; font-weight: 700; font-size: 0.85rem;">
-                  PROFORMA <span id="prevNumero">PRO-001</span>
-                </span>
-                <p style="font-size: 0.82rem; color: #475569; margin-top: 6px;">
-                  Fecha: <strong id="prevFecha"></strong><br />
-                  Válida por: <strong id="prevValidez">15</strong> días
-                </p>
-              </div>
-            </div>
-
-            <div style="background: #f8fafc; padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; font-size: 0.9rem;">
-              <strong>Cliente:</strong> <span id="prevCliente">Cliente General</span><br />
-              <strong>Contacto:</strong> <span id="prevContacto">—</span>
-            </div>
-
+          <div id="recordsTableContainer" class="table-scroll">
             <table>
               <thead>
                 <tr>
-                  <th>Descripción</th>
-                  <th style="text-align: center;">Cant.</th>
-                  <th style="text-align: right;">Precio Unit.</th>
-                  <th style="text-align: right;">Subtotal</th>
+                  <th scope="col">Fecha</th>
+                  <th scope="col">Categoría</th>
+                  <th scope="col">Nota / Descripción</th>
+                  <th scope="col">Monto (CRC)</th>
+                  <th scope="col">Acciones</th>
                 </tr>
               </thead>
-              <tbody id="prevItemsBody"></tbody>
+              <tbody id="recordsTableBody"></tbody>
+            </table>
+          </div>
+
+          <div id="emptyRecordsState" class="empty-box hidden" role="status">
+            <h3 style="margin-top: 0;">No hay datos registrados en esta vista</h3>
+            <p>El listado está vacío. Registre un movimiento en el formulario superior o cargue una hoja de Excel.</p>
+          </div>
+        </article>
+      </section>
+
+      <!-- ====================================================================
+           SECCIÓN 2: GRÁFICAS RESUMEN (DEPÓSITOS, GASTOS, MATERIALES, SALARIOS)
+           ==================================================================== -->
+      <section id="secGraficas" role="tabpanel" aria-labelledby="tabGraficas" class="hidden">
+        <article class="panel-card">
+          <h2 class="panel-title">Gráficas de resumen financiero</h2>
+          <p class="panel-desc">
+            Distribución visual y textual en colones costarricenses (CRC) de Depósitos, Gastos, Materiales y Salarios.
+          </p>
+
+          <div class="charts-wrapper">
+            <div class="chart-card">
+              <h3 style="margin-top: 0;">Comparativa por categoría (Barras)</h3>
+              <div class="canvas-container">
+                <canvas id="barChartCanvas" role="img" aria-label="Gráfica de barras de montos por categoría"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-card">
+              <h3 style="margin-top: 0;">Proporción por categoría (Circular)</h3>
+              <div class="canvas-container">
+                <canvas id="doughnutChartCanvas" role="img" aria-label="Gráfica circular de proporción por categoría"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <ul id="chartTextBreakdown" class="summary-list" aria-label="Detalle numérico de las gráficas"></ul>
+        </article>
+      </section>
+
+      <!-- ====================================================================
+           SECCIÓN 3: CARGA DE HOJAS DE EXCEL (.XLSX / .XLS / .CSV)
+           ==================================================================== -->
+      <section id="secExcel" role="tabpanel" aria-labelledby="tabExcel" class="hidden">
+        <article class="panel-card">
+          <h2 class="panel-title">Cargar hoja de Excel</h2>
+          <p class="panel-desc">
+            Importe gastos, depósitos, materiales y salarios con fechas, descripciones y montos. Compatible con el libro <strong>Control de Gastos Taller.xlsx</strong> (hojas: <em>Laminas</em>, <em>Depositos</em>, <em>Gastos</em>, <em>Salarios</em>).
+          </p>
+
+          <div id="excelAlert" class="feedback-box" role="status" aria-live="polite"></div>
+
+          <form id="excelUploadForm" novalidate>
+            <div class="grid-form">
+              <div class="field-block">
+                <label for="excelFile">Archivo de Excel (.xlsx, .xls, .csv) *</label>
+                <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" required />
+                <span id="excelFileErr" class="error-msg" role="alert"></span>
+              </div>
+
+              <div class="field-block">
+                <label for="excelFallbackCategory">Categoría por defecto (para hojas sin nombre específico)</label>
+                <select id="excelFallbackCategory">
+                  <option value="Gastos">Gastos</option>
+                  <option value="Salarios">Salarios</option>
+                  <option value="Depósitos">Depósitos</option>
+                  <option value="Materiales">Materiales</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="margin-top: 18px; display: flex; flex-wrap: wrap; gap: 12px;">
+              <button type="submit" class="btn-primary">Cargar datos del archivo</button>
+              <button type="button" id="loadTallerTemplateBtn">Cargar estructura ejemplo de Taller</button>
+            </div>
+          </form>
+        </article>
+      </section>
+
+      <!-- ====================================================================
+           SECCIÓN 4: GENERADOR DE FACTURAS Y PROFORMAS (FORMATO LA CANTERA CR)
+           ==================================================================== -->
+      <section id="secFacturas" role="tabpanel" aria-labelledby="tabFacturas">
+        <div class="invoice-split">
+          <article class="panel-card">
+            <h2 class="panel-title" id="invoiceFormTitle">Generar factura — La Cantera CR</h2>
+            <p class="panel-desc" id="invoiceFormDesc">
+              Complete los datos del cliente y agregue uno o varios sobres o líneas de detalle. Puede imprimir el documento, guardarlo en PDF o registrarlo en <strong>Depósitos</strong>.
+            </p>
+
+            <div id="invoiceAlert" class="feedback-box" role="status" aria-live="polite"></div>
+
+            <form id="invoiceForm" novalidate>
+              <div class="grid-form">
+                <div class="field-block">
+                  <label for="invDocType">Tipo de documento *</label>
+                  <select id="invDocType">
+                    <option value="FACTURA">Factura</option>
+                    <option value="PROFORMA">Proforma</option>
+                  </select>
+                </div>
+
+                <div class="field-block">
+                  <label for="invNumInput" id="invNumLabel">Número de factura *</label>
+                  <input type="text" id="invNumInput" value="11" required />
+                  <span id="invNumErr" class="error-msg" role="alert"></span>
+                </div>
+
+                <div class="field-block">
+                  <label for="invDateInput">Fecha *</label>
+                  <input type="date" id="invDateInput" value="2026-10-21" required />
+                  <span id="invDateErr" class="error-msg" role="alert"></span>
+                </div>
+
+                <div class="field-block span-all">
+                  <label for="invClientInput">Cliente *</label>
+                  <input type="text" id="invClientInput" value="MUEBLERIA ALFARO QUESADA" required />
+                  <span id="invClientErr" class="error-msg" role="alert"></span>
+                </div>
+
+                <div class="field-block span-all">
+                  <label for="invAddressInput">Dirección *</label>
+                  <input type="text" id="invAddressInput" value="GRECIA, RESIDENCIAL LAS PALMAS" required />
+                  <span id="invAddressErr" class="error-msg" role="alert"></span>
+                </div>
+
+                <div class="field-block span-all">
+                  <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 6px;">
+                    <label style="margin: 0;">Detalle de sobres / trabajos *</label>
+                    <button type="button" id="addInvoiceItemBtn" class="btn-sm">+ Agregar otro sobre / ítem</button>
+                  </div>
+                  <div id="invoiceItemsContainer" aria-live="polite"></div>
+                  <span id="invItemsErr" class="error-msg" role="alert"></span>
+                </div>
+
+                <div class="field-block span-all">
+                  <p style="margin: 0; font-weight: 700;">
+                    Total calculado del documento: <span id="formCalculatedTotal">₡1.170.000,00</span>
+                  </p>
+                </div>
+              </div>
+
+              <div style="margin-top: 18px; display: flex; flex-wrap: wrap; gap: 12px;">
+                <button type="submit" class="btn-primary" id="updateInvoiceBtn">Actualizar factura</button>
+                <button type="button" id="registerInvoiceDepositBtn">Registrar en Depósitos</button>
+                <button type="button" id="downloadInvoicePdfBtn">Guardar en PDF</button>
+                <button type="button" id="printInvoiceBtn">Imprimir</button>
+              </div>
+            </form>
+          </article>
+
+          <!-- Vista previa fiel a Factura / Proforma La Cantera CR -->
+          <article class="invoice-paper" id="invoicePreviewSheet" aria-label="Documento de factura o proforma">
+            <div class="invoice-header">
+              <div class="cantera-badge">
+                <strong>CR · La Cantera CR</strong>
+                <span>GRANITO, CUARZO, MÁRMOL</span>
+              </div>
+              <div>
+                <p><strong><span id="outDocTypeLabel">FACTURA</span> Nº <span id="outInvNum">11</span></strong></p>
+                <p>Palmares, Alajuela, Costa Rica</p>
+                <p>Teléfono: 85572766 / 88755876</p>
+                <p>mendezhoracio300@gmail.com</p>
+                <p>Fecha: <span id="outInvDate">21-10-2026</span></p>
+              </div>
+            </div>
+
+            <div>
+              <p><strong>CLIENTE:</strong> <span id="outInvClient">MUEBLERIA ALFARO QUESADA</span></p>
+              <p><strong>DIRECCIÓN:</strong> <span id="outInvAddress">GRECIA, RESIDENCIAL LAS PALMAS</span></p>
+            </div>
+
+            <table class="invoice-items-table">
+              <thead>
+                <tr>
+                  <th scope="col">DESCRIPCIÓN</th>
+                  <th scope="col" style="text-align: right;">TOTAL</th>
+                </tr>
+              </thead>
+              <tbody id="outInvItemsBody">
+                <tr>
+                  <td>Sobre en cuarzo para cocina, isla con respaldos altos y baños</td>
+                  <td style="text-align: right; font-weight: 700;">₡1.170.000,00</td>
+                </tr>
+              </tbody>
             </table>
 
-            <div class="proforma-totals">
-              <div><span>Subtotal:</span> <span id="prevSubtotal">₡0.00</span></div>
-              <div><span>Descuento:</span> <span id="prevDescuento">-₡0.00</span></div>
-              <div id="prevIvaRow" style="display: none;"><span>IVA (13%):</span> <span id="prevIva">₡0.00</span></div>
-              <div class="proforma-total-final"><span>TOTAL:</span> <span id="prevTotal">₡0.00</span></div>
+            <div class="invoice-totals-box">
+              <p style="display: flex; justify-content: space-between;">
+                <span>SUBTOTAL:</span>
+                <strong id="outInvSubtotal">₡1.170.000,00</strong>
+              </p>
+              <p style="display: flex; justify-content: space-between; font-size: 1.1rem;">
+                <span>TOTAL:</span>
+                <strong id="outInvTotal">₡1.170.000,00</strong>
+              </p>
+              <p style="font-weight: 600;">I.V.A Incluido</p>
             </div>
 
-            <div style="margin-top: 18px; padding-top: 12px; border-top: 1px dashed #cbd5e1; font-size: 0.83rem; color: #475569;">
-              <strong>Condiciones:</strong> <span id="prevNotas"></span>
+            <div id="outProformaNote" class="proforma-validity-note hidden">
+              <strong>Documento Proforma / Cotización:</strong> Validez de 15 días naturales. Sujeto a disponibilidad de material y confirmación de medidas en sitio.
             </div>
-          </div>
 
-          <!-- Proformas Guardadas -->
-          <div class="card">
-            <h3>Proformas guardadas</h3>
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>N.º</th>
-                    <th>Cliente</th>
-                    <th>Total</th>
-                    <th>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody id="savedProformasBody">
-                  <tr><td colspan="4">Aún no hay proformas guardadas.</td></tr>
-                </tbody>
-              </table>
+            <div class="invoice-payment-box">
+              <img
+                src="data:image/png;base64,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"
+                alt="Información de pago La Cantera CR: SINPE 85572766 Horacio Mendez B., Banco Nacional IBAN Colones CR41015101920010469599 y Dólares CR02015101920020067287, BCR IBAN Colones CR70015202001300568535 y Dólares CR51015202001352818800, BAC IBAN Colones CR12010200009554370908 Horacio Mendez Blanco"
+                class="invoice-payment-img"
+              />
             </div>
-          </div>
+          </article>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   </main>
 
+  <!-- Modal de confirmación para eliminación -->
+  <dialog id="deleteConfirmModal" aria-labelledby="modalTitle" aria-describedby="modalMessage">
+    <h2 id="modalTitle" style="margin-top: 0; font-size: 1.25rem;">Confirmar acción</h2>
+    <p id="modalMessage">¿Desea eliminar este elemento?</p>
+    <div class="dialog-footer">
+      <button type="button" id="modalCancelBtn">Cancelar</button>
+      <button type="button" id="modalConfirmBtn" class="btn-danger">Confirmar eliminación</button>
+    </div>
+  </dialog>
+
+  <footer class="footer-note">
+    <span>Financial · CR — Administración financiera empresarial</span>
+  </footer>
+
   <script>
+    /* ==========================================================================
+       LÓGICA DE LA APLICACIÓN FINANCIAL · CR
+       ========================================================================== */
     (function () {
-      // Configura aquí las credenciales de tu proyecto en Supabase
+      'use strict';
+
       const SUPABASE_URL = 'https://evhhftxtnlxcjlmzprlp.supabase.co';
-      const SUPABASE_ANON_KEY = 'sb_publishable_gtfT4-W8MVPi-ge3VaCUJA_kQiQ-2tw';
-      const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_gtfT4-W8MVPi-ge3VaCUJA_kQiQ-2tw';
+      const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
-      let allMovements = [];
-      const PROFORMAS_STORAGE_KEY = 'financial_cr_proformas_v1';
+      const KEYS = {
+        THEME: 'financial_cr_v2_theme'
+      };
 
-      // Utilidades generales
-      const todayISO = () => new Date().toISOString().slice(0, 10);
+      const CATEGORIES = ['Gastos', 'Salarios', 'Depósitos', 'Materiales'];
 
-      const formatCRC = (num) =>
-        '₡' + Number(num || 0).toLocaleString('es-CR', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        });
+      const crcFormatter = new Intl.NumberFormat('es-CR', {
+        style: 'currency',
+        currency: 'CRC',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
 
-      const normalizarTexto = (texto) =>
-        String(texto || '')
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .trim()
-          .toLowerCase();
-
-      function showAlert(id, message, type) {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.textContent = message;
-        el.className = `alert show ${type === 'ok' ? 'ok' : 'err'}`;
+      function formatCRC(val) {
+        const num = Number(val);
+        return Number.isFinite(num) ? crcFormatter.format(num) : '₡0,00';
       }
 
-      function hideAlert(id) {
-        const el = document.getElementById(id);
+      function loadStorage(key, defaultValue) {
+        try {
+          const item = window.localStorage.getItem(key);
+          return item === null ? defaultValue : JSON.parse(item);
+        } catch (error) {
+          return defaultValue;
+        }
+      }
+
+      function saveStorage(key, value) {
+        try {
+          window.localStorage.setItem(key, JSON.stringify(value));
+          return true;
+        } catch (error) {
+          return false;
+        }
+      }
+
+      const appState = {
+        user: null,
+        records: [],
+        selectedFilter: 'Todas',
+        confirmCallback: null,
+        barChart: null,
+        doughnutChart: null,
+        docMode: 'FACTURA'
+      };
+
+      function todayISO() {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      }
+
+      function toDisplayDate(iso) {
+        if (!iso || !iso.includes('-')) return iso || '';
+        const parts = iso.split('-');
+        return parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : iso;
+      }
+
+      /* ------------------------------------------------------------------------
+         ALERTAS Y VALIDACIÓN VISUAL ACCESIBLE
+         ------------------------------------------------------------------------ */
+      function showAlert(boxId, text, kind) {
+        const el = document.getElementById(boxId);
         if (!el) return;
-        el.className = 'alert';
+        el.textContent = text;
+        el.className = `feedback-box visible ${kind}`;
+      }
+
+      function hideAlert(boxId) {
+        const el = document.getElementById(boxId);
+        if (!el) return;
         el.textContent = '';
+        el.className = 'feedback-box';
       }
 
-      // Tema claro / oscuro
-      const themeToggleBtn = document.getElementById('themeToggleBtn');
-      const savedTheme = localStorage.getItem('financial_cr_theme');
-      if (savedTheme === 'dark') {
-        document.documentElement.setAttribute('data-theme', 'dark');
-      }
-      themeToggleBtn?.addEventListener('click', () => {
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        if (isDark) {
-          document.documentElement.removeAttribute('data-theme');
-          localStorage.setItem('financial_cr_theme', 'light');
+      function setFieldValidation(inputId, errId, msg) {
+        const input = inputId ? document.getElementById(inputId) : null;
+        const err = document.getElementById(errId);
+        if (!err) return;
+        if (msg) {
+          err.textContent = msg;
+          err.classList.add('visible');
+          if (input) input.setAttribute('aria-invalid', 'true');
         } else {
-          document.documentElement.setAttribute('data-theme', 'dark');
-          localStorage.setItem('financial_cr_theme', 'dark');
+          err.textContent = '';
+          err.classList.remove('visible');
+          if (input) input.removeAttribute('aria-invalid');
+        }
+      }
+
+      /* ------------------------------------------------------------------------
+         MODO CLARO Y MODO OSCURO
+         ------------------------------------------------------------------------ */
+      const toggleThemeBtn = document.getElementById('toggleThemeBtn');
+      const themeSymbol = document.getElementById('themeSymbol');
+      const themeText = document.getElementById('themeText');
+
+      function setTheme(theme) {
+        const dark = theme === 'dark';
+        document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+        toggleThemeBtn.setAttribute('aria-pressed', String(dark));
+        themeSymbol.textContent = dark ? '☀' : '☾';
+        themeText.textContent = dark ? 'Modo claro' : 'Modo oscuro';
+        saveStorage(KEYS.THEME, dark ? 'dark' : 'light');
+        if (appState.user) {
+          updateCharts();
+        }
+      }
+
+      setTheme(loadStorage(KEYS.THEME, 'light'));
+
+      toggleThemeBtn.addEventListener('click', function () {
+        const current = document.documentElement.getAttribute('data-theme');
+        setTheme(current === 'dark' ? 'light' : 'dark');
+      });
+
+      /* ------------------------------------------------------------------------
+         CONTROL DE ACCESO ÚNICO (SUPABASE AUTH)
+         ------------------------------------------------------------------------ */
+      const authView = document.getElementById('authView');
+      const workspaceView = document.getElementById('workspaceView');
+      const activeAdminTag = document.getElementById('activeAdminTag');
+      const logoutBtn = document.getElementById('logoutBtn');
+
+      document.getElementById('togglePwdBtn').addEventListener('click', function () {
+        const pwdInput = document.getElementById('loginPassword');
+        const isHidden = pwdInput.type === 'password';
+        pwdInput.type = isHidden ? 'text' : 'password';
+        this.textContent = isHidden ? 'Ocultar' : 'Ver';
+      });
+
+      sb.auth.onAuthStateChange(async (_event, session) => {
+        appState.user = session ? session.user : null;
+        if (appState.user) {
+          authView.classList.add('hidden');
+          workspaceView.classList.remove('hidden');
+          activeAdminTag.textContent = `Sesión: ${appState.user.email}`;
+          activeAdminTag.classList.remove('hidden');
+          logoutBtn.classList.remove('hidden');
+          await fetchRecordsFromDB();
+        } else {
+          appState.records = [];
+          authView.classList.remove('hidden');
+          workspaceView.classList.add('hidden');
+          activeAdminTag.classList.add('hidden');
+          logoutBtn.classList.add('hidden');
         }
       });
 
-      // Navegación por pestañas
-      document.querySelectorAll('.tab-btn').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
-          document.querySelectorAll('.view-section').forEach((v) => v.classList.remove('active'));
-          btn.classList.add('active');
-          document.getElementById(btn.dataset.tab)?.classList.add('active');
-        });
-      });
-
-      // ==========================================
-      // 1. SUPABASE: CONSULTA Y RENDERIZADO
-      // ==========================================
-      async function fetchRecordsFromDB() {
-        const { data, error } = await sb
-          .from('movimientos')
-          .select('id, date, category, amount, note')
-          .order('date', { ascending: false });
-
-        if (error) {
-          showAlert('globalAlert', 'Error al conectar con Supabase: ' + error.message, 'err');
-          return;
-        }
-
-        allMovements = data || [];
-        updateKPIs();
-        renderMovementsTable();
-      }
-
-      function updateKPIs() {
-        let depositos = 0;
-        let egresos = 0;
-
-        allMovements.forEach((m) => {
-          const val = Number(m.amount) || 0;
-          if (normalizarTexto(m.category) === 'depositos') {
-            depositos += val;
-          } else {
-            egresos += val;
-          }
-        });
-
-        const balance = depositos - egresos;
-        document.getElementById('kpiDepositos').textContent = formatCRC(depositos);
-        document.getElementById('kpiEgresos').textContent = formatCRC(egresos);
-        const balEl = document.getElementById('kpiBalance');
-        balEl.textContent = formatCRC(balance);
-        balEl.style.color = balance >= 0 ? '#10b981' : '#ef4444';
-        document.getElementById('kpiCantidad').textContent = allMovements.length;
-      }
-
-      function renderMovementsTable() {
-        const tbody = document.getElementById('movementsTableBody');
-        const catFilter = document.getElementById('filterCategory').value;
-        const searchTerm = normalizarTexto(document.getElementById('searchMovements').value);
-
-        const filtered = allMovements.filter((m) => {
-          const matchCat =
-            catFilter === 'Todas' || normalizarTexto(m.category) === normalizarTexto(catFilter);
-          const matchText =
-            !searchTerm ||
-            normalizarTexto(m.note).includes(searchTerm) ||
-            String(m.date || '').includes(searchTerm) ||
-            normalizarTexto(m.category).includes(searchTerm);
-          return matchCat && matchText;
-        });
-
-        if (filtered.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="5">No hay movimientos que coincidan con el filtro.</td></tr>';
-          return;
-        }
-
-        tbody.innerHTML = filtered
-          .map(
-            (m) => `
-            <tr>
-              <td>${m.date || ''}</td>
-              <td><span class="badge">${m.category || ''}</span></td>
-              <td>${String(m.note || '').replace(/</g, '&lt;')}</td>
-              <td style="font-weight: 700;">${formatCRC(m.amount)}</td>
-              <td>
-                <button type="button" class="btn-danger" data-delete-id="${m.id}">Eliminar</button>
-              </td>
-            </tr>
-          `
-          )
-          .join('');
-      }
-
-      document.getElementById('filterCategory')?.addEventListener('change', renderMovementsTable);
-      document.getElementById('searchMovements')?.addEventListener('input', renderMovementsTable);
-
-      document.getElementById('movementsTableBody')?.addEventListener('click', async (e) => {
-        const btn = e.target.closest('[data-delete-id]');
-        if (!btn) return;
-        const id = btn.dataset.deleteId;
-        btn.disabled = true;
-
-        const { error } = await sb.from('movimientos').delete().eq('id', id);
-        if (error) {
-          showAlert('globalAlert', 'No se pudo eliminar el movimiento.', 'err');
-          btn.disabled = false;
-          return;
-        }
-
-        await fetchRecordsFromDB();
-        showAlert('globalAlert', 'Movimiento eliminado correctamente.', 'ok');
-      });
-
-      // ==========================================
-      // 2. REGISTRO MANUAL DE MOVIMIENTO
-      // ==========================================
-      document.getElementById('movDate').value = todayISO();
-
-      document.getElementById('manualForm')?.addEventListener('submit', async (e) => {
+      document.getElementById('loginForm').addEventListener('submit', async function (e) {
         e.preventDefault();
         hideAlert('globalAlert');
 
-        const amount = parseFloat(document.getElementById('movAmount').value);
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        const submitBtn = document.getElementById('loginSubmitBtn');
+
+        setFieldValidation('loginEmail', 'loginEmailErr', '');
+        setFieldValidation('loginPassword', 'loginPasswordErr', '');
+
+        if (!email) {
+          setFieldValidation('loginEmail', 'loginEmailErr', 'Ingrese su correo electrónico.');
+          return;
+        }
+        if (!password) {
+          setFieldValidation('loginPassword', 'loginPasswordErr', 'Ingrese su contraseña.');
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Verificando...';
+
+        const { error } = await sb.auth.signInWithPassword({ email, password });
+
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Entrar al sistema';
+
+        if (error) {
+          setFieldValidation('loginPassword', 'loginPasswordErr', 'Credenciales inválidas o acceso no autorizado.');
+          return;
+        }
+
+        document.getElementById('loginPassword').value = '';
+        showAlert('globalAlert', 'Acceso concedido al sistema Financial · CR.', 'ok');
+      });
+
+      logoutBtn.addEventListener('click', async function () {
+        await sb.auth.signOut();
+        showAlert('globalAlert', 'Ha cerrado su sesión de forma segura.', 'ok');
+      });
+
+      /* ------------------------------------------------------------------------
+         PESTAÑAS Y MODO FACTURA / PROFORMA
+         ------------------------------------------------------------------------ */
+      const tabs = Array.from(document.querySelectorAll('.tab-item'));
+      const panels = Array.from(document.querySelectorAll('[role="tabpanel"]'));
+
+      function setDocumentMode(mode) {
+        const isProforma = mode === 'PROFORMA';
+        appState.docMode = isProforma ? 'PROFORMA' : 'FACTURA';
+
+        document.getElementById('invDocType').value = appState.docMode;
+        document.getElementById('invoiceFormTitle').textContent = isProforma
+          ? 'Generar proforma — La Cantera CR'
+          : 'Generar factura — La Cantera CR';
+        document.getElementById('invoiceFormDesc').innerHTML = isProforma
+          ? 'Complete los datos del cliente y los sobres o trabajos a cotizar. Puede imprimir la proforma o guardarla en PDF.'
+          : 'Complete los datos del cliente y agregue uno o varios sobres o líneas de detalle. Puede imprimir la factura o guardarla directamente en <strong>Depósitos</strong>.';
+        document.getElementById('invNumLabel').textContent = isProforma
+          ? 'Número de proforma *'
+          : 'Número de factura *';
+        document.getElementById('updateInvoiceBtn').textContent = isProforma
+          ? 'Actualizar proforma'
+          : 'Actualizar factura';
+        document.getElementById('outDocTypeLabel').textContent = appState.docMode;
+
+        document.getElementById('registerInvoiceDepositBtn').classList.toggle('hidden', isProforma);
+        document.getElementById('outProformaNote').classList.toggle('hidden', !isProforma);
+      }
+
+      document.getElementById('invDocType').addEventListener('change', function (e) {
+        const mode = e.target.value;
+        setDocumentMode(mode);
+        const targetTabId = mode === 'PROFORMA' ? 'tabProformas' : 'tabFacturas';
+        tabs.forEach(t => t.setAttribute('aria-selected', String(t.id === targetTabId)));
+      });
+
+      function selectTab(targetTab) {
+        tabs.forEach(t => t.setAttribute('aria-selected', String(t === targetTab)));
+        panels.forEach(p => p.classList.toggle('hidden', p.id !== targetTab.getAttribute('aria-controls')));
+
+        if (targetTab.id === 'tabGraficas') {
+          updateCharts();
+        } else if (targetTab.id === 'tabProformas') {
+          setDocumentMode('PROFORMA');
+        } else if (targetTab.id === 'tabFacturas') {
+          setDocumentMode('FACTURA');
+        }
+      }
+
+      tabs.forEach((tab, index) => {
+        tab.addEventListener('click', () => selectTab(tab));
+        tab.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowRight') {
+            const nextTab = tabs[(index + 1) % tabs.length];
+            nextTab.focus();
+            selectTab(nextTab);
+          } else if (e.key === 'ArrowLeft') {
+            const prevTab = tabs[(index - 1 + tabs.length) % tabs.length];
+            prevTab.focus();
+            selectTab(prevTab);
+          }
+        });
+      });
+
+      /* ------------------------------------------------------------------------
+         REGISTRO, EDICIÓN, FILTRO Y ELIMINACIÓN DE MOVIMIENTOS
+         ------------------------------------------------------------------------ */
+      document.getElementById('movDate').value = todayISO();
+
+      async function fetchRecordsFromDB() {
+        const { data, error } = await sb
+          .from('movimientos')
+          .select('*')
+          .order('date', { ascending: false })
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          showAlert('globalAlert', 'Error al cargar los datos desde la base de datos.', 'err');
+          return;
+        }
+
+        appState.records = (data || []).map(r => ({
+          id: r.id,
+          amount: Number(r.amount),
+          category: r.category,
+          date: r.date,
+          note: r.note || ''
+        }));
+
+        refreshAllViews();
+      }
+
+      document.getElementById('movementForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        hideAlert('movementAlert');
+
+        const editId = document.getElementById('editRecordId').value;
+        const rawAmount = document.getElementById('movAmount').value;
         const category = document.getElementById('movCategory').value;
         const date = document.getElementById('movDate').value;
         const note = document.getElementById('movNote').value.trim();
 
-        if (!amount || amount <= 0 || !date || !note) {
-          showAlert('globalAlert', 'Completa todos los campos con un monto válido.', 'err');
-          return;
+        const amountNum = Number(rawAmount);
+        let valid = true;
+
+        if (!rawAmount || !Number.isFinite(amountNum) || amountNum <= 0) {
+          setFieldValidation('movAmount', 'movAmountErr', 'Ingrese un monto numérico mayor que cero.');
+          valid = false;
+        } else {
+          setFieldValidation('movAmount', 'movAmountErr', '');
         }
 
-        const submitBtn = e.target.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-
-        const { error } = await sb.from('movimientos').insert([{ amount, category, date, note }]);
-        submitBtn.disabled = false;
-
-        if (error) {
-          showAlert('globalAlert', 'Error al guardar en Supabase: ' + error.message, 'err');
-          return;
+        if (!CATEGORIES.includes(category)) {
+          setFieldValidation('movCategory', 'movCategoryErr', 'Seleccione una categoría válida.');
+          valid = false;
+        } else {
+          setFieldValidation('movCategory', 'movCategoryErr', '');
         }
 
-        e.target.reset();
-        document.getElementById('movDate').value = todayISO();
-        await fetchRecordsFromDB();
-        showAlert('globalAlert', 'Movimiento guardado correctamente.', 'ok');
+        if (!date) {
+          setFieldValidation('movDate', 'movDateErr', 'Seleccione una fecha.');
+          valid = false;
+        } else {
+          setFieldValidation('movDate', 'movDateErr', '');
+        }
+
+        if (!valid) return;
+
+        const cleanAmount = Number(amountNum.toFixed(2));
+        const saveBtn = document.getElementById('saveMovBtn');
+        saveBtn.disabled = true;
+
+        if (editId) {
+          const { error } = await sb
+            .from('movimientos')
+            .update({ amount: cleanAmount, category, date, note })
+            .eq('id', editId);
+
+          saveBtn.disabled = false;
+          if (error) {
+            showAlert('movementAlert', 'Error al actualizar el movimiento en la base de datos.', 'err');
+            return;
+          }
+
+          clearMovementForm();
+          await fetchRecordsFromDB();
+          showAlert('movementAlert', 'Movimiento actualizado correctamente.', 'ok');
+        } else {
+          const { error } = await sb
+            .from('movimientos')
+            .insert([{ amount: cleanAmount, category, date, note }]);
+
+          saveBtn.disabled = false;
+          if (error) {
+            showAlert('movementAlert', 'Error al guardar el movimiento en la base de datos.', 'err');
+            return;
+          }
+
+          appState.selectedFilter = 'Todas';
+          document.getElementById('categoryFilterSelect').value = 'Todas';
+          clearMovementForm();
+          await fetchRecordsFromDB();
+          showAlert('movementAlert', 'Movimiento guardado correctamente.', 'ok');
+        }
       });
 
-      // ==========================================
-      // 3. IMPORTACIÓN DESDE EXCEL Y DATOS EJEMPLO
-      // ==========================================
-      function mapSheetToCategory(sheetName, rawCat) {
-        const source = normalizarTexto(rawCat || sheetName);
-        if (source.includes('deposito') || source.includes('ingreso') || source.includes('abono')) {
-          return 'Depósitos';
-        }
-        if (source.includes('salario') || source.includes('planilla') || source.includes('operario')) {
-          return 'Salarios';
-        }
-        if (source.includes('gasto') || source.includes('transporte') || source.includes('servicio')) {
-          return 'Gastos';
-        }
-        return 'Materiales';
+      function clearMovementForm() {
+        document.getElementById('editRecordId').value = '';
+        document.getElementById('movAmount').value = '';
+        document.getElementById('movCategory').value = 'Gastos';
+        document.getElementById('movDate').value = todayISO();
+        document.getElementById('movNote').value = '';
+        document.getElementById('formMovementTitle').textContent = 'Registrar movimiento';
+        document.getElementById('saveMovBtn').textContent = 'Guardar movimiento';
+        document.getElementById('cancelEditBtn').classList.add('hidden');
+        setFieldValidation('movAmount', 'movAmountErr', '');
+        setFieldValidation('movCategory', 'movCategoryErr', '');
+        setFieldValidation('movDate', 'movDateErr', '');
       }
 
-      function parseExcelDate(val) {
-        if (!val) return todayISO();
-        if (typeof val === 'number') {
-          const parsed = XLSX.SSF.parse_date_code(val);
-          if (parsed) {
-            const m = String(parsed.m).padStart(2, '0');
-            const d = String(parsed.d).padStart(2, '0');
-            return `${parsed.y}-${m}-${d}`;
+      document.getElementById('cancelEditBtn').addEventListener('click', function () {
+        clearMovementForm();
+        hideAlert('movementAlert');
+      });
+
+      function beginEdit(id) {
+        const rec = appState.records.find(r => r.id === id);
+        if (!rec) return;
+        hideAlert('movementAlert');
+        document.getElementById('editRecordId').value = rec.id;
+        document.getElementById('movAmount').value = rec.amount;
+        document.getElementById('movCategory').value = rec.category;
+        document.getElementById('movDate').value = rec.date;
+        document.getElementById('movNote').value = rec.note;
+        document.getElementById('formMovementTitle').textContent = 'Editar movimiento';
+        document.getElementById('saveMovBtn').textContent = 'Actualizar movimiento';
+        document.getElementById('cancelEditBtn').classList.remove('hidden');
+        document.getElementById('movAmount').focus();
+      }
+
+      /* ------------------------------------------------------------------------
+         CONFIRMACIÓN DE ELIMINACIÓN
+         ------------------------------------------------------------------------ */
+      const deleteModal = document.getElementById('deleteConfirmModal');
+      const modalMessage = document.getElementById('modalMessage');
+
+      function askConfirmation(text, onConfirm) {
+        modalMessage.textContent = text;
+        appState.confirmCallback = onConfirm;
+        if (typeof deleteModal.showModal === 'function') {
+          deleteModal.showModal();
+        } else if (window.confirm(text)) {
+          onConfirm();
+        }
+      }
+
+      document.getElementById('modalCancelBtn').addEventListener('click', function () {
+        appState.confirmCallback = null;
+        if (deleteModal.open) deleteModal.close();
+      });
+
+      document.getElementById('modalConfirmBtn').addEventListener('click', function () {
+        if (typeof appState.confirmCallback === 'function') {
+          appState.confirmCallback();
+        }
+        appState.confirmCallback = null;
+        if (deleteModal.open) deleteModal.close();
+      });
+
+      document.getElementById('deleteAllBtn').addEventListener('click', function () {
+        if (appState.records.length === 0) return;
+        askConfirmation(
+          '¿Confirma que desea borrar todos los movimientos almacenados? Esta acción dejará el listado vacío.',
+          async function () {
+            const { error } = await sb.from('movimientos').delete().not('id', 'is', null);
+            if (error) {
+              showAlert('movementAlert', 'No se pudieron eliminar los registros.', 'err');
+              return;
+            }
+            clearMovementForm();
+            await fetchRecordsFromDB();
+            showAlert('movementAlert', 'Todos los movimientos fueron eliminados.', 'ok');
+          }
+        );
+      });
+
+      document.getElementById('categoryFilterSelect').addEventListener('change', function (e) {
+        appState.selectedFilter = e.target.value;
+        renderRecordsTable();
+      });
+
+      /* ------------------------------------------------------------------------
+         CÁLCULOS NUMÉRICOS CORRECTOS EN COLONES
+         ------------------------------------------------------------------------ */
+      function calculateCategorySums() {
+        const sums = {
+          Gastos: 0,
+          Salarios: 0,
+          Depósitos: 0,
+          Materiales: 0
+        };
+
+        for (const item of appState.records) {
+          const numericVal = Number(item.amount);
+          if (Number.isFinite(numericVal) && Object.prototype.hasOwnProperty.call(sums, item.category)) {
+            sums[item.category] = Number((sums[item.category] + numericVal).toFixed(2));
           }
         }
-        const str = String(val).trim();
-        if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.slice(0, 10);
-        const parts = str.split(/[\/\-]/);
-        if (parts.length === 3 && parts[2].length === 4) {
-          return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+
+        const totalEgresos = Number((sums.Gastos + sums.Salarios + sums.Materiales).toFixed(2));
+        const totalPeriodo = Number((sums.Depósitos - totalEgresos).toFixed(2));
+
+        return { sums, totalEgresos, totalPeriodo };
+      }
+
+      function renderKPIs() {
+        const { sums, totalPeriodo } = calculateCategorySums();
+        document.getElementById('kpiTotalPeriodo').textContent = formatCRC(totalPeriodo);
+        document.getElementById('kpiCantidadRegistros').textContent = `${appState.records.length} movimiento(s) guardados`;
+        document.getElementById('kpiDepositos').textContent = formatCRC(sums.Depósitos);
+        document.getElementById('kpiGastos').textContent = formatCRC(sums.Gastos);
+        document.getElementById('kpiMateriales').textContent = formatCRC(sums.Materiales);
+        document.getElementById('kpiSalarios').textContent = formatCRC(sums.Salarios);
+      }
+
+      function renderRecordsTable() {
+        const tbody = document.getElementById('recordsTableBody');
+        const tableContainer = document.getElementById('recordsTableContainer');
+        const emptyState = document.getElementById('emptyRecordsState');
+        const deleteAllBtn = document.getElementById('deleteAllBtn');
+
+        deleteAllBtn.disabled = appState.records.length === 0;
+
+        const list = appState.selectedFilter === 'Todas'
+          ? appState.records
+          : appState.records.filter(r => r.category === appState.selectedFilter);
+
+        tbody.innerHTML = '';
+
+        if (list.length === 0) {
+          tableContainer.classList.add('hidden');
+          emptyState.classList.remove('hidden');
+          return;
         }
+
+        tableContainer.classList.remove('hidden');
+        emptyState.classList.add('hidden');
+
+        list.forEach(rec => {
+          const tr = document.createElement('tr');
+
+          const tdDate = document.createElement('td');
+          tdDate.textContent = toDisplayDate(rec.date);
+
+          const tdCat = document.createElement('td');
+          const pill = document.createElement('span');
+          pill.className = 'cat-pill';
+          pill.textContent = rec.category;
+          tdCat.appendChild(pill);
+
+          const tdNote = document.createElement('td');
+          tdNote.textContent = rec.note || 'Sin nota';
+
+          const tdAmount = document.createElement('td');
+          tdAmount.style.fontWeight = '700';
+          tdAmount.textContent = formatCRC(rec.amount);
+
+          const tdActions = document.createElement('td');
+          tdActions.className = 'row-actions';
+
+          const btnEdit = document.createElement('button');
+          btnEdit.type = 'button';
+          btnEdit.className = 'btn-sm';
+          btnEdit.textContent = 'Editar';
+          btnEdit.setAttribute('aria-label', `Editar ${rec.category} por ${formatCRC(rec.amount)}`);
+          btnEdit.addEventListener('click', () => beginEdit(rec.id));
+
+          const btnDelete = document.createElement('button');
+          btnDelete.type = 'button';
+          btnDelete.className = 'btn-sm btn-danger';
+          btnDelete.textContent = 'Eliminar';
+          btnDelete.setAttribute('aria-label', `Eliminar ${rec.category} por ${formatCRC(rec.amount)}`);
+          btnDelete.addEventListener('click', () => {
+            askConfirmation(
+              `¿Desea eliminar el registro de "${rec.category}" por ${formatCRC(rec.amount)}?`,
+              async () => {
+                const { error } = await sb.from('movimientos').delete().eq('id', rec.id);
+                if (error) {
+                  showAlert('movementAlert', 'No se pudo eliminar el registro.', 'err');
+                  return;
+                }
+                await fetchRecordsFromDB();
+                showAlert('movementAlert', 'Registro eliminado.', 'ok');
+              }
+            );
+          });
+
+          tdActions.appendChild(btnEdit);
+          tdActions.appendChild(btnDelete);
+
+          tr.appendChild(tdDate);
+          tr.appendChild(tdCat);
+          tr.appendChild(tdNote);
+          tr.appendChild(tdAmount);
+          tr.appendChild(tdActions);
+          tbody.appendChild(tr);
+        });
+      }
+
+      /* ------------------------------------------------------------------------
+         GRÁFICAS RESUMEN (CHART.JS CON RESPALDO TEXTUAL)
+         ------------------------------------------------------------------------ */
+      function updateCharts() {
+        const { sums } = calculateCategorySums();
+        const labels = ['Depósitos', 'Gastos', 'Materiales', 'Salarios'];
+        const values = [sums.Depósitos, sums.Gastos, sums.Materiales, sums.Salarios];
+        const totalSum = values.reduce((a, b) => a + b, 0);
+
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const textColor = isDark ? '#f5f6f8' : '#1b1e23';
+        const gridColor = isDark ? '#373d47' : '#d0d5dd';
+        const colors = isDark
+          ? ['#e6e9ef', '#9ba3b0', '#6c7584', '#49505c']
+          : ['#23272f', '#5a6270', '#8d95a3', '#bcc2cc'];
+
+        const breakdownUl = document.getElementById('chartTextBreakdown');
+        breakdownUl.innerHTML = '';
+        labels.forEach((lbl, idx) => {
+          const val = values[idx];
+          const pct = totalSum > 0 ? ((val / totalSum) * 100).toFixed(1) : '0.0';
+          const li = document.createElement('li');
+          const left = document.createElement('span');
+          left.textContent = `${lbl} (${pct}%)`;
+          const right = document.createElement('strong');
+          right.textContent = formatCRC(val);
+          li.appendChild(left);
+          li.appendChild(right);
+          breakdownUl.appendChild(li);
+        });
+
+        if (typeof window.Chart === 'undefined') return;
+
+        const barCtx = document.getElementById('barChartCanvas').getContext('2d');
+        const doughnutCtx = document.getElementById('doughnutChartCanvas').getContext('2d');
+
+        if (appState.barChart) appState.barChart.destroy();
+        if (appState.doughnutChart) appState.doughnutChart.destroy();
+
+        appState.barChart = new Chart(barCtx, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Monto en CRC',
+              data: values,
+              backgroundColor: colors,
+              borderColor: textColor,
+              borderWidth: 1,
+              borderRadius: 6
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: ctx => formatCRC(ctx.raw)
+                }
+              }
+            },
+            scales: {
+              x: { ticks: { color: textColor, font: { size: 14 } }, grid: { display: false } },
+              y: {
+                ticks: {
+                  color: textColor,
+                  font: { size: 13 },
+                  callback: v => formatCRC(v)
+                },
+                grid: { color: gridColor }
+              }
+            }
+          }
+        });
+
+        appState.doughnutChart = new Chart(doughnutCtx, {
+          type: 'doughnut',
+          data: {
+            labels,
+            datasets: [{
+              data: totalSum > 0 ? values : [1, 1, 1, 1],
+              backgroundColor: colors,
+              borderColor: isDark ? '#1c1f24' : '#ffffff',
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { color: textColor, font: { size: 14 } }
+              },
+              tooltip: {
+                callbacks: {
+                  label: ctx => totalSum > 0 ? `${ctx.label}: ${formatCRC(ctx.raw)}` : `${ctx.label}: ₡0,00`
+                }
+              }
+            }
+          }
+        });
+      }
+
+      /* ------------------------------------------------------------------------
+         CARGA DE HOJAS DE EXCEL (.XLSX, .XLS, .CSV) CON SUPABASE
+         ------------------------------------------------------------------------ */
+      function mapSheetToCategory(sheetName, fallback) {
+        const clean = String(sheetName || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        if (clean.includes('lamina') || clean.includes('material')) return 'Materiales';
+        if (clean.includes('deposito') || clean.includes('abono')) return 'Depósitos';
+        if (clean.includes('salario') || clean.includes('planilla')) return 'Salarios';
+        if (clean.includes('gasto')) return 'Gastos';
+        return fallback;
+      }
+
+      function normalizeDateValue(raw) {
+        if (!raw) return todayISO();
+        if (raw instanceof Date && !isNaN(raw.getTime())) {
+          return raw.toISOString().slice(0, 10);
+        }
+        const s = String(raw).trim();
+        if (/^\d{5}$/.test(s)) {
+          const d = new Date(Math.floor(Number(s) - 25569) * 86400 * 1000);
+          if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+        }
+        const dmy = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+        if (dmy) return `${dmy[3]}-${dmy[2].padStart(2, '0')}-${dmy[1].padStart(2, '0')}`;
+        const ymd = s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+        if (ymd) return `${ymd[1]}-${ymd[2].padStart(2, '0')}-${ymd[3].padStart(2, '0')}`;
         return todayISO();
       }
 
-      function parseAmount(val) {
-        if (typeof val === 'number') return val;
-        const cleaned = String(val || '')
-          .replace(/[₡$,\s]/g, '')
-          .trim();
-        return parseFloat(cleaned) || 0;
+      function normalizeNumberValue(raw) {
+        if (typeof raw === 'number') return Number.isFinite(raw) ? raw : 0;
+        if (!raw) return 0;
+        let text = String(raw).replace(/[₡$\s]/g, '').trim();
+        if (text.includes('.') && text.includes(',')) {
+          text = text.replace(/\./g, '').replace(',', '.');
+        } else if (text.includes(',')) {
+          const parts = text.split(',');
+          text = (parts[1] && parts[1].length <= 2) ? text.replace(',', '.') : text.replace(/,/g, '');
+        }
+        const parsed = Number(text);
+        return Number.isFinite(parsed) ? parsed : 0;
       }
 
-      document.getElementById('excelUploadForm')?.addEventListener('submit', async (e) => {
+      document.getElementById('excelUploadForm').addEventListener('submit', async function (e) {
         e.preventDefault();
         hideAlert('excelAlert');
 
-        const fileInput = document.getElementById('excelFileInput');
-        const file = fileInput.files?.[0];
+        const fileInput = document.getElementById('excelFile');
+        const fallbackCat = document.getElementById('excelFallbackCategory').value;
+        const file = fileInput.files && fileInput.files[0];
+
         if (!file) {
-          showAlert('excelAlert', 'Selecciona un archivo Excel o CSV primero.', 'err');
+          setFieldValidation('excelFile', 'excelFileErr', 'Seleccione un archivo de Excel (.xlsx, .xls o .csv).');
           return;
         }
+        setFieldValidation('excelFile', 'excelFileErr', '');
 
         try {
+          if (typeof window.XLSX === 'undefined') {
+            showAlert('excelAlert', 'No se pudo cargar el lector de hojas de cálculo.', 'err');
+            return;
+          }
+
           const buffer = await file.arrayBuffer();
-          const workbook = XLSX.read(buffer, { type: 'array' });
+          const workbook = window.XLSX.read(buffer, { type: 'array', cellDates: true });
           const importedList = [];
 
-          workbook.SheetNames.forEach((sheetName) => {
-            const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
-            rows.forEach((row) => {
-              const keys = Object.keys(row);
-              const amountKey = keys.find((k) => /monto|total|precio|valor|importe|amount/i.test(k));
-              const dateKey = keys.find((k) => /fecha|date/i.test(k));
-              const noteKey = keys.find((k) => /detalle|nota|descripcion|descripción|concepto|factura|note/i.test(k));
-              const catKey = keys.find((k) => /categoria|categoría|tipo|category/i.test(k));
+          workbook.SheetNames.forEach(sheetName => {
+            const category = mapSheetToCategory(sheetName, fallbackCat);
+            const sheet = workbook.Sheets[sheetName];
+            const rows = window.XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
 
-              const amount = amountKey ? parseAmount(row[amountKey]) : 0;
-              if (amount > 0) {
+            rows.forEach((row, rowIndex) => {
+              if (rowIndex === 0) return;
+              if (!Array.isArray(row) || row.length === 0) return;
+
+              const firstCell = String(row[0] || '').trim().toLowerCase();
+              if (firstCell === 'total' || firstCell === 'fecha') return;
+
+              const dateVal = normalizeDateValue(row[0]);
+              const descVal = String(row[1] || '').trim();
+              let amountVal = 0;
+
+              for (let col = row.length - 1; col >= 1; col--) {
+                const candidate = normalizeNumberValue(row[col]);
+                if (candidate > 0) {
+                  amountVal = candidate;
+                  break;
+                }
+              }
+
+              if (amountVal > 0) {
                 importedList.push({
-                  amount,
-                  category: mapSheetToCategory(sheetName, catKey ? row[catKey] : ''),
-                  date: parseExcelDate(dateKey ? row[dateKey] : ''),
-                  note: String(noteKey && row[noteKey] ? row[noteKey] : `Importado de ${sheetName}`).trim()
+                  amount: Number(amountVal.toFixed(2)),
+                  category,
+                  date: dateVal,
+                  note: descVal || `Importado de hoja ${sheetName}`
                 });
               }
             });
@@ -985,11 +1982,11 @@
           fileInput.value = '';
           showAlert('excelAlert', `Se cargaron ${importedList.length} movimiento(s) desde "${file.name}".`, 'ok');
         } catch (err) {
-          showAlert('excelAlert', 'No se pudo leer el archivo Excel: ' + err.message, 'err');
+          showAlert('excelAlert', 'No fue posible leer el archivo seleccionado. Verifique su formato.', 'err');
         }
       });
 
-      document.getElementById('loadTallerTemplateBtn')?.addEventListener('click', async function () {
+      document.getElementById('loadTallerTemplateBtn').addEventListener('click', async function () {
         hideAlert('excelAlert');
         const today = todayISO();
         const sampleData = [
@@ -1013,55 +2010,402 @@
         showAlert('excelAlert', 'Se cargaron 4 registros de ejemplo según las hojas del taller.', 'ok');
       });
 
-      // ==========================================
-      // 4. DESCARGAR REPORTE (CSV) CORREGIDO
-      // ==========================================
+      /* ------------------------------------------------------------------------
+         GENERADOR DE FACTURAS Y PROFORMAS (LA CANTERA CR)
+         ------------------------------------------------------------------------ */
+      const invoiceItemsContainer = document.getElementById('invoiceItemsContainer');
+
+      function updateFormLiveTotal() {
+        const amountInputs = Array.from(invoiceItemsContainer.querySelectorAll('.inv-item-amount'));
+        let sum = 0;
+        amountInputs.forEach(inp => {
+          const val = Number(inp.value);
+          if (Number.isFinite(val) && val > 0) {
+            sum += val;
+          }
+        });
+        document.getElementById('formCalculatedTotal').textContent = formatCRC(sum);
+      }
+
+      function reindexInvoiceItemRows() {
+        const cards = Array.from(invoiceItemsContainer.querySelectorAll('.invoice-line-card'));
+        cards.forEach((card, idx) => {
+          const title = card.querySelector('.inv-item-title');
+          const removeBtn = card.querySelector('.inv-item-remove');
+          const descInput = card.querySelector('.inv-item-desc');
+          const descLabel = card.querySelector('.inv-item-desc-label');
+          const amtInput = card.querySelector('.inv-item-amount');
+          const amtLabel = card.querySelector('.inv-item-amount-label');
+
+          const rowNum = idx + 1;
+          const descId = `invItemDesc_${rowNum}`;
+          const amtId = `invItemAmt_${rowNum}`;
+
+          if (title) title.textContent = `Sobre / Ítem #${rowNum}`;
+          if (descInput && descLabel) {
+            descInput.id = descId;
+            descLabel.setAttribute('for', descId);
+          }
+          if (amtInput && amtLabel) {
+            amtInput.id = amtId;
+            amtLabel.setAttribute('for', amtId);
+          }
+          if (removeBtn) {
+            removeBtn.classList.toggle('hidden', cards.length <= 1);
+            removeBtn.setAttribute('aria-label', `Eliminar sobre o ítem #${rowNum}`);
+          }
+        });
+      }
+
+      function createInvoiceItemRow(descText, amountVal) {
+        const card = document.createElement('div');
+        card.className = 'invoice-line-card';
+
+        const header = document.createElement('div');
+        header.className = 'invoice-line-header';
+
+        const title = document.createElement('strong');
+        title.className = 'inv-item-title';
+        title.textContent = 'Sobre / Ítem';
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'btn-sm btn-danger inv-item-remove';
+        removeBtn.textContent = 'Quitar';
+        removeBtn.addEventListener('click', function () {
+          card.remove();
+          reindexInvoiceItemRows();
+          updateFormLiveTotal();
+        });
+
+        header.appendChild(title);
+        header.appendChild(removeBtn);
+
+        const grid = document.createElement('div');
+        grid.className = 'invoice-line-grid';
+
+        const descBlock = document.createElement('div');
+        descBlock.className = 'field-block';
+        const descLabel = document.createElement('label');
+        descLabel.className = 'inv-item-desc-label';
+        descLabel.textContent = 'Descripción del sobre / trabajo *';
+        const descInput = document.createElement('textarea');
+        descInput.className = 'inv-item-desc';
+        descInput.rows = 2;
+        descInput.placeholder = 'Ej. Sobre en cuarzo blanco para isla de cocina';
+        descInput.required = true;
+        descInput.value = descText || '';
+        descBlock.appendChild(descLabel);
+        descBlock.appendChild(descInput);
+
+        const amtBlock = document.createElement('div');
+        amtBlock.className = 'field-block';
+        const amtLabel = document.createElement('label');
+        amtLabel.className = 'inv-item-amount-label';
+        amtLabel.textContent = 'Monto (CRC) *';
+        const amtInput = document.createElement('input');
+        amtInput.type = 'number';
+        amtInput.className = 'inv-item-amount';
+        amtInput.step = '0.01';
+        amtInput.min = '0.01';
+        amtInput.placeholder = 'Ej. 450000';
+        amtInput.required = true;
+        amtInput.value = amountVal !== undefined && amountVal !== '' ? amountVal : '';
+        amtInput.addEventListener('input', updateFormLiveTotal);
+        amtBlock.appendChild(amtLabel);
+        amtBlock.appendChild(amtInput);
+
+        grid.appendChild(descBlock);
+        grid.appendChild(amtBlock);
+
+        card.appendChild(header);
+        card.appendChild(grid);
+
+        invoiceItemsContainer.appendChild(card);
+        reindexInvoiceItemRows();
+        updateFormLiveTotal();
+      }
+
+      createInvoiceItemRow('Sobre en cuarzo para cocina, isla con respaldos altos y baños', 1170000);
+
+      document.getElementById('addInvoiceItemBtn').addEventListener('click', function () {
+        createInvoiceItemRow('', '');
+        const allDescs = invoiceItemsContainer.querySelectorAll('.inv-item-desc');
+        if (allDescs.length > 0) {
+          allDescs[allDescs.length - 1].focus();
+        }
+      });
+
+      function getValidatedInvoice() {
+        const docType = document.getElementById('invDocType').value;
+        const isProforma = docType === 'PROFORMA';
+        const num = document.getElementById('invNumInput').value.trim();
+        const date = document.getElementById('invDateInput').value;
+        const client = document.getElementById('invClientInput').value.trim();
+        const address = document.getElementById('invAddressInput').value.trim();
+
+        let ok = true;
+
+        if (!num) {
+          setFieldValidation('invNumInput', 'invNumErr', `Ingrese el número de ${isProforma ? 'proforma' : 'factura'}.`);
+          ok = false;
+        } else {
+          setFieldValidation('invNumInput', 'invNumErr', '');
+        }
+
+        if (!date) {
+          setFieldValidation('invDateInput', 'invDateErr', 'Seleccione una fecha.');
+          ok = false;
+        } else {
+          setFieldValidation('invDateInput', 'invDateErr', '');
+        }
+
+        if (!client) {
+          setFieldValidation('invClientInput', 'invClientErr', 'Ingrese el nombre del cliente.');
+          ok = false;
+        } else {
+          setFieldValidation('invClientInput', 'invClientErr', '');
+        }
+
+        if (!address) {
+          setFieldValidation('invAddressInput', 'invAddressErr', 'Ingrese la dirección.');
+          ok = false;
+        } else {
+          setFieldValidation('invAddressInput', 'invAddressErr', '');
+        }
+
+        const itemCards = Array.from(invoiceItemsContainer.querySelectorAll('.invoice-line-card'));
+        const items = [];
+        let itemsErrorMsg = '';
+
+        if (itemCards.length === 0) {
+          itemsErrorMsg = 'Agregue al menos un sobre o concepto al documento.';
+          ok = false;
+        } else {
+          itemCards.forEach((card, idx) => {
+            const descEl = card.querySelector('.inv-item-desc');
+            const amtEl = card.querySelector('.inv-item-amount');
+            const descText = descEl.value.trim();
+            const rawAmt = amtEl.value;
+            const amtNum = Number(rawAmt);
+
+            if (!descText) {
+              descEl.setAttribute('aria-invalid', 'true');
+              if (!itemsErrorMsg) itemsErrorMsg = `Complete la descripción del sobre / ítem #${idx + 1}.`;
+              ok = false;
+            } else {
+              descEl.removeAttribute('aria-invalid');
+            }
+
+            if (!rawAmt || !Number.isFinite(amtNum) || amtNum <= 0) {
+              amtEl.setAttribute('aria-invalid', 'true');
+              if (!itemsErrorMsg) itemsErrorMsg = `Ingrese un monto mayor que cero en el sobre / ítem #${idx + 1}.`;
+              ok = false;
+            } else {
+              amtEl.removeAttribute('aria-invalid');
+            }
+
+            if (descText && Number.isFinite(amtNum) && amtNum > 0) {
+              items.push({
+                desc: descText,
+                amount: Number(amtNum.toFixed(2))
+              });
+            }
+          });
+        }
+
+        setFieldValidation(null, 'invItemsErr', itemsErrorMsg);
+
+        if (!ok) return null;
+
+        const total = Number(items.reduce((acc, it) => acc + it.amount, 0).toFixed(2));
+        return { docType, isProforma, num, date, client, address, items, total };
+      }
+
+      function renderInvoicePreview(inv) {
+        document.getElementById('outDocTypeLabel').textContent = inv.docType;
+        document.getElementById('outInvNum').textContent = inv.num;
+        document.getElementById('outInvDate').textContent = toDisplayDate(inv.date);
+        document.getElementById('outInvClient').textContent = inv.client;
+        document.getElementById('outInvAddress').textContent = inv.address;
+        document.getElementById('outProformaNote').classList.toggle('hidden', !inv.isProforma);
+
+        const outBody = document.getElementById('outInvItemsBody');
+        outBody.innerHTML = '';
+
+        inv.items.forEach(item => {
+          const tr = document.createElement('tr');
+          const tdDesc = document.createElement('td');
+          tdDesc.textContent = item.desc;
+
+          const tdTotal = document.createElement('td');
+          tdTotal.style.textAlign = 'right';
+          tdTotal.style.fontWeight = '700';
+          tdTotal.textContent = formatCRC(item.amount);
+
+          tr.appendChild(tdDesc);
+          tr.appendChild(tdTotal);
+          outBody.appendChild(tr);
+        });
+
+        const crcText = formatCRC(inv.total);
+        document.getElementById('outInvSubtotal').textContent = crcText;
+        document.getElementById('outInvTotal').textContent = crcText;
+      }
+
+      document.getElementById('invoiceForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        hideAlert('invoiceAlert');
+        const inv = getValidatedInvoice();
+        if (!inv) return;
+        renderInvoicePreview(inv);
+        showAlert('invoiceAlert', `Vista previa de ${inv.isProforma ? 'proforma' : 'factura'} actualizada.`, 'ok');
+      });
+
+      document.getElementById('registerInvoiceDepositBtn').addEventListener('click', async function () {
+        hideAlert('invoiceAlert');
+        const inv = getValidatedInvoice();
+        if (!inv || inv.isProforma) return;
+        renderInvoicePreview(inv);
+
+        const btn = this;
+        btn.disabled = true;
+
+        const joinedDesc = inv.items.map(it => it.desc).join(' | ');
+        const { error } = await sb.from('movimientos').insert([{
+          amount: inv.total,
+          category: 'Depósitos',
+          date: inv.date,
+          note: `Factura Nº${inv.num} - ${inv.client}: ${joinedDesc}`
+        }]);
+
+        btn.disabled = false;
+
+        if (error) {
+          showAlert('invoiceAlert', 'Error al registrar la factura en la base de datos.', 'err');
+          return;
+        }
+
+        await fetchRecordsFromDB();
+        showAlert('invoiceAlert', `Factura Nº${inv.num} registrada en Depósitos por ${formatCRC(inv.total)}.`, 'ok');
+      });
+
+      function buildInvoicePdfFilename(inv) {
+        const prefix = inv.isProforma ? 'Proforma' : 'Factura';
+        const safeNum = String(inv.num || 'sin_numero')
+          .trim()
+          .replace(/[^a-zA-Z0-9_-]/g, '_');
+        const safeClient = String(inv.client || '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-zA-Z0-9]+/g, '_')
+          .replace(/^_+|_+$/g, '')
+          .slice(0, 35);
+        return `${prefix}_N${safeNum}${safeClient ? '_' + safeClient : ''}.pdf`;
+      }
+
+      document.getElementById('downloadInvoicePdfBtn').addEventListener('click', async function () {
+        hideAlert('invoiceAlert');
+        const inv = getValidatedInvoice();
+        if (!inv) return;
+        renderInvoicePreview(inv);
+
+        const pdfBtn = this;
+        const originalText = pdfBtn.textContent;
+        const fileName = buildInvoicePdfFilename(inv);
+
+        if (typeof window.html2pdf === 'undefined') {
+          showAlert('invoiceAlert', 'No se cargó el generador directo de PDF; abriendo ventana de impresión.', 'err');
+          window.print();
+          return;
+        }
+
+        try {
+          pdfBtn.disabled = true;
+          pdfBtn.textContent = 'Generando PDF...';
+
+          const sheetEl = document.getElementById('invoicePreviewSheet');
+          const options = {
+            margin: [10, 10, 10, 10],
+            filename: fileName,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
+              scale: 2,
+              useCORS: true,
+              backgroundColor: '#ffffff',
+              scrollY: 0
+            },
+            jsPDF: {
+              unit: 'mm',
+              format: 'letter',
+              orientation: 'portrait'
+            }
+          };
+
+          await window.html2pdf().set(options).from(sheetEl).save();
+          showAlert('invoiceAlert', `${inv.isProforma ? 'Proforma' : 'Factura'} guardada como "${fileName}".`, 'ok');
+        } catch (err) {
+          showAlert('invoiceAlert', 'Ocurrió un problema al generar el archivo PDF. Puede usar el botón "Imprimir".', 'err');
+        } finally {
+          pdfBtn.disabled = false;
+          pdfBtn.textContent = originalText;
+        }
+      });
+
+      document.getElementById('printInvoiceBtn').addEventListener('click', function () {
+        hideAlert('invoiceAlert');
+        const inv = getValidatedInvoice();
+        if (!inv) return;
+        renderInvoicePreview(inv);
+        window.print();
+      });
+
+      /* ------------------------------------------------------------------------
+         EXPORTAR REPORTE POR CATEGORÍA (CSV) CON SUMA TOTAL
+         ------------------------------------------------------------------------ */
+      const normalizarTexto = (texto) =>
+        String(texto || '')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .trim()
+          .toLowerCase();
+
       document.getElementById('btnExportarReporte')?.addEventListener('click', async () => {
         hideAlert('globalAlert');
         const categoriaElegida = document.getElementById('selectCategoriaReporte').value;
-        const fechaDesde = document.getElementById('reporteDesde').value;
-        const fechaHasta = document.getElementById('reporteHasta').value;
         const claveBuscada = normalizarTexto(categoriaElegida);
 
-        let query = sb
+        const { data, error } = await sb
           .from('movimientos')
           .select('date, category, amount, note')
           .order('date', { ascending: false });
 
-        if (fechaDesde) query = query.gte('date', fechaDesde);
-        if (fechaHasta) query = query.lte('date', fechaHasta);
-
-        const { data, error } = await query;
-
         if (error) {
-          showAlert('globalAlert', 'Ocurrió un error al consultar los movimientos para el reporte.', 'err');
+          showAlert('globalAlert', 'Ocurrió un error al consultar los movimientos.', 'err');
           return;
         }
 
-        const filtrados = (data || []).filter((m) =>
-          claveBuscada === 'todas' ? true : normalizarTexto(m.category) === claveBuscada
+        const filtrados = (data || []).filter(
+          (m) => normalizarTexto(m.category) === claveBuscada
         );
 
         if (filtrados.length === 0) {
-          showAlert(
-            'globalAlert',
-            `No hay movimientos registrados para "${categoriaElegida}" en el rango seleccionado.`,
-            'err'
-          );
+          showAlert('globalAlert', `No hay movimientos registrados en ${categoriaElegida}.`, 'err');
           return;
         }
 
-        const totalMonto = filtrados.reduce((suma, m) => suma + (Number(m.amount) || 0), 0);
+        const totalMonto = filtrados.reduce(
+          (suma, m) => suma + (Number(m.amount) || 0),
+          0
+        );
 
         const encabezados = ['Fecha', 'Categoria', 'Monto_CRC', 'Nota'];
-        const filas = filtrados.map((m) =>
-          [
-            m.date,
-            `"${String(m.category || '').replace(/"/g, '""')}"`,
-            Number(m.amount || 0).toFixed(2),
-            `"${String(m.note || '').replace(/"/g, '""')}"`
-          ].join(',')
-        );
+        const filas = filtrados.map((m) => [
+          m.date,
+          `"${String(m.category || '').replace(/"/g, '""')}"`,
+          Number(m.amount || 0).toFixed(2),
+          `"${String(m.note || '').replace(/"/g, '""')}"`
+        ].join(','));
 
         const filaVacia = ',,,';
         const filaTotal = [
@@ -1077,263 +2421,23 @@
 
         const nombreLimpio = categoriaElegida
           .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .replace(/\s+/g, '_');
+          .replace(/[\u0300-\u036f]/g, '');
 
         enlace.href = URL.createObjectURL(blob);
         enlace.download = `Reporte_${nombreLimpio}_${todayISO()}.csv`;
         enlace.click();
         setTimeout(() => URL.revokeObjectURL(enlace.href), 1000);
-
-        showAlert(
-          'globalAlert',
-          `Reporte de ${categoriaElegida} descargado (${filtrados.length} movimiento(s)).`,
-          'ok'
-        );
+        showAlert('globalAlert', `Reporte de ${categoriaElegida} descargado (${filtrados.length} movimiento(s)).`, 'ok');
       });
 
-      // ==========================================
-      // 5. MÓDULO DE PROFORMAS
-      // ==========================================
-      let proformaItems = [
-        { desc: 'Sobre de cuarzo blanco (incluye corte e instalación)', qty: 1, price: 380000 }
-      ];
-
-      function initProformaDefaults() {
-        document.getElementById('profFecha').value = todayISO();
-        const saved = JSON.parse(localStorage.getItem(PROFORMAS_STORAGE_KEY) || '[]');
-        document.getElementById('profNumero').value = `PRO-${String(saved.length + 1).padStart(3, '0')}`;
-        renderProformaItemsInputs();
-        updateProformaPreview();
-        renderSavedProformas();
+      /* ------------------------------------------------------------------------
+         ACTUALIZACIÓN INTEGRAL DE VISTAS
+         ------------------------------------------------------------------------ */
+      function refreshAllViews() {
+        renderKPIs();
+        renderRecordsTable();
+        updateCharts();
       }
-
-      function renderProformaItemsInputs() {
-        const container = document.getElementById('proformaItemsContainer');
-        container.innerHTML = proformaItems
-          .map(
-            (item, idx) => `
-            <div class="item-row" data-item-index="${idx}">
-              <input type="text" class="prof-item-desc" placeholder="Descripción del trabajo o material" value="${String(item.desc).replace(/"/g, '&quot;')}" />
-              <input type="number" class="prof-item-qty" min="0.01" step="0.01" value="${item.qty}" />
-              <input type="number" class="prof-item-price" min="0" step="0.01" value="${item.price}" />
-              <button type="button" class="btn-danger prof-remove-item" title="Quitar línea">✕</button>
-            </div>
-          `
-          )
-          .join('');
-      }
-
-      function calculateProformaTotals() {
-        const subtotal = proformaItems.reduce(
-          (acc, item) => acc + (Number(item.qty) || 0) * (Number(item.price) || 0),
-          0
-        );
-        const descuento = Math.max(0, parseFloat(document.getElementById('profDescuento').value) || 0);
-        const baseImponible = Math.max(0, subtotal - descuento);
-        const aplicarIVA = document.getElementById('profAplicarIVA').checked;
-        const iva = aplicarIVA ? baseImponible * 0.13 : 0;
-        const total = baseImponible + iva;
-        return { subtotal, descuento, aplicarIVA, iva, total };
-      }
-
-      function updateProformaPreview() {
-        document.getElementById('prevEmisor').textContent =
-          document.getElementById('profEmisor').value.trim() || 'Taller · CR';
-        document.getElementById('prevNumero').textContent =
-          document.getElementById('profNumero').value.trim() || 'PRO-001';
-        document.getElementById('prevFecha').textContent =
-          document.getElementById('profFecha').value || todayISO();
-        document.getElementById('prevValidez').textContent =
-          document.getElementById('profValidez').value || '15';
-        document.getElementById('prevCliente').textContent =
-          document.getElementById('profCliente').value.trim() || 'Cliente General';
-        document.getElementById('prevContacto').textContent =
-          document.getElementById('profContacto').value.trim() || '—';
-        document.getElementById('prevNotas').textContent =
-          document.getElementById('profNotas').value.trim() || '—';
-
-        const tbody = document.getElementById('prevItemsBody');
-        tbody.innerHTML = proformaItems
-          .map((item) => {
-            const lineTotal = (Number(item.qty) || 0) * (Number(item.price) || 0);
-            return `
-              <tr>
-                <td>${String(item.desc || 'Ítem').replace(/</g, '&lt;')}</td>
-                <td style="text-align: center;">${Number(item.qty) || 0}</td>
-                <td style="text-align: right;">${formatCRC(item.price)}</td>
-                <td style="text-align: right; font-weight: 600;">${formatCRC(lineTotal)}</td>
-              </tr>
-            `;
-          })
-          .join('');
-
-        const { subtotal, descuento, aplicarIVA, iva, total } = calculateProformaTotals();
-        document.getElementById('prevSubtotal').textContent = formatCRC(subtotal);
-        document.getElementById('prevDescuento').textContent = '-' + formatCRC(descuento);
-        document.getElementById('prevIvaRow').style.display = aplicarIVA ? 'flex' : 'none';
-        document.getElementById('prevIva').textContent = formatCRC(iva);
-        document.getElementById('prevTotal').textContent = formatCRC(total);
-      }
-
-      document.getElementById('addProformaItemBtn')?.addEventListener('click', () => {
-        proformaItems.push({ desc: '', qty: 1, price: 0 });
-        renderProformaItemsInputs();
-        updateProformaPreview();
-      });
-
-      document.getElementById('proformaItemsContainer')?.addEventListener('input', (e) => {
-        const row = e.target.closest('.item-row');
-        if (!row) return;
-        const idx = Number(row.dataset.itemIndex);
-        proformaItems[idx] = {
-          desc: row.querySelector('.prof-item-desc').value,
-          qty: parseFloat(row.querySelector('.prof-item-qty').value) || 0,
-          price: parseFloat(row.querySelector('.prof-item-price').value) || 0
-        };
-        updateProformaPreview();
-      });
-
-      document.getElementById('proformaItemsContainer')?.addEventListener('click', (e) => {
-        const btn = e.target.closest('.prof-remove-item');
-        if (!btn) return;
-        if (proformaItems.length === 1) {
-          showAlert('globalAlert', 'La proforma debe contener al menos una línea.', 'err');
-          return;
-        }
-        const idx = Number(btn.closest('.item-row').dataset.itemIndex);
-        proformaItems.splice(idx, 1);
-        renderProformaItemsInputs();
-        updateProformaPreview();
-      });
-
-      ['profNumero', 'profFecha', 'profValidez', 'profEmisor', 'profCliente', 'profContacto', 'profDescuento', 'profAplicarIVA', 'profNotas'].forEach(
-        (id) => {
-          document.getElementById(id)?.addEventListener('input', updateProformaPreview);
-          document.getElementById(id)?.addEventListener('change', updateProformaPreview);
-        }
-      );
-
-      document.getElementById('printProformaBtn')?.addEventListener('click', () => {
-        window.print();
-      });
-
-      document.getElementById('saveProformaBtn')?.addEventListener('click', () => {
-        const { total } = calculateProformaTotals();
-        const record = {
-          id: Date.now().toString(),
-          numero: document.getElementById('profNumero').value.trim() || 'PRO-001',
-          fecha: document.getElementById('profFecha').value || todayISO(),
-          validez: document.getElementById('profValidez').value || '15',
-          emisor: document.getElementById('profEmisor').value.trim(),
-          cliente: document.getElementById('profCliente').value.trim() || 'Cliente General',
-          contacto: document.getElementById('profContacto').value.trim(),
-          descuento: parseFloat(document.getElementById('profDescuento').value) || 0,
-          aplicarIVA: document.getElementById('profAplicarIVA').checked,
-          notas: document.getElementById('profNotas').value.trim(),
-          items: JSON.parse(JSON.stringify(proformaItems)),
-          total
-        };
-
-        const list = JSON.parse(localStorage.getItem(PROFORMAS_STORAGE_KEY) || '[]');
-        list.unshift(record);
-        localStorage.setItem(PROFORMAS_STORAGE_KEY, JSON.stringify(list));
-        renderSavedProformas();
-        showAlert('globalAlert', `Proforma ${record.numero} guardada correctamente.`, 'ok');
-      });
-
-      function renderSavedProformas() {
-        const tbody = document.getElementById('savedProformasBody');
-        const list = JSON.parse(localStorage.getItem(PROFORMAS_STORAGE_KEY) || '[]');
-        if (list.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4">Aún no hay proformas guardadas.</td></tr>';
-          return;
-        }
-        tbody.innerHTML = list
-          .map(
-            (p) => `
-            <tr>
-              <td><strong>${p.numero}</strong><br><small>${p.fecha}</small></td>
-              <td>${String(p.cliente).replace(/</g, '&lt;')}</td>
-              <td style="font-weight: 700;">${formatCRC(p.total)}</td>
-              <td style="display: flex; gap: 6px; flex-wrap: wrap;">
-                <button type="button" class="btn-secondary" style="padding: 5px 9px; font-size: 0.8rem;" data-load-prof="${p.id}">Cargar</button>
-                <button type="button" class="btn-danger" data-del-prof="${p.id}">Eliminar</button>
-              </td>
-            </tr>
-          `
-          )
-          .join('');
-      }
-
-      document.getElementById('savedProformasBody')?.addEventListener('click', (e) => {
-        const loadBtn = e.target.closest('[data-load-prof]');
-        const delBtn = e.target.closest('[data-del-prof]');
-        const list = JSON.parse(localStorage.getItem(PROFORMAS_STORAGE_KEY) || '[]');
-
-        if (loadBtn) {
-          const found = list.find((p) => p.id === loadBtn.dataset.loadProf);
-          if (!found) return;
-          document.getElementById('profNumero').value = found.numero;
-          document.getElementById('profFecha').value = found.fecha;
-          document.getElementById('profValidez').value = found.validez;
-          document.getElementById('profEmisor').value = found.emisor;
-          document.getElementById('profCliente').value = found.cliente;
-          document.getElementById('profContacto').value = found.contacto;
-          document.getElementById('profDescuento').value = found.descuento;
-          document.getElementById('profAplicarIVA').checked = Boolean(found.aplicarIVA);
-          document.getElementById('profNotas').value = found.notas;
-          proformaItems = JSON.parse(JSON.stringify(found.items || []));
-          renderProformaItemsInputs();
-          updateProformaPreview();
-          showAlert('globalAlert', `Proforma ${found.numero} cargada en el editor.`, 'ok');
-        }
-
-        if (delBtn) {
-          const updated = list.filter((p) => p.id !== delBtn.dataset.delProf);
-          localStorage.setItem(PROFORMAS_STORAGE_KEY, JSON.stringify(updated));
-          renderSavedProformas();
-        }
-      });
-
-      document.getElementById('convertirDepositoBtn')?.addEventListener('click', async function () {
-        const { total } = calculateProformaTotals();
-        const adelanto = Number((total * 0.5).toFixed(2));
-        if (adelanto <= 0) {
-          showAlert('globalAlert', 'El monto total de la proforma debe ser mayor que cero.', 'err');
-          return;
-        }
-
-        const numero = document.getElementById('profNumero').value.trim() || 'PRO-001';
-        const cliente = document.getElementById('profCliente').value.trim() || 'Cliente General';
-
-        this.disabled = true;
-        const { error } = await sb.from('movimientos').insert([
-          {
-            amount: adelanto,
-            category: 'Depósitos',
-            date: todayISO(),
-            note: `Adelanto 50% ${numero} - ${cliente}`
-          }
-        ]);
-        this.disabled = false;
-
-        if (error) {
-          showAlert('globalAlert', 'No se pudo registrar el adelanto en Depósitos: ' + error.message, 'err');
-          return;
-        }
-
-        await fetchRecordsFromDB();
-        showAlert(
-          'globalAlert',
-          `Adelanto de ${formatCRC(adelanto)} (${numero}) registrado en Depósitos.`,
-          'ok'
-        );
-      });
-
-      // Inicialización
-      initProformaDefaults();
-      fetchRecordsFromDB();
     })();
   </script>
 </body>
